@@ -1,0 +1,193 @@
+---
+title: "Regression"
+output: 
+  html_document: 
+    theme: readable
+    css: ../css/custom.css
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(GGally)
+library(corrplot)
+data(mtcars)
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(10108)
+```
+
+---
+
+
+## Dataset
+
+A data frame with 32 observations on 11 variables.
+
+| var  | Description                              |
+|------|------------------------------------------|
+| mpg  | Miles/(US) gallon                        |
+| cyl  | Number of cylinders                      |
+| disp | Displacement (cu.in.)                    |
+| hp   | Gross horsepower                         |
+| drat | Rear axle ratio                          |
+| wt   | Weight (1000 lbs)                        |
+| qsec | 1/4 mile time                            |
+| vs   | V/S                                      |
+| am   | Transmission (0 = automatic, 1 = manual) |
+| gear | Number of forward gears                  |
+| carb | Number of carburetors                    |
+
+```{r mtcars}
+head(mtcars)
+```
+
+```{r mtcarsplot, fig.width=4, fig.height=4, echo=FALSE}
+corrplot(cor(mtcars[, -1]), method="ellipse")
+```
+<br/>
+
+
+## OLS Regression
+
+Given a data set ${\{y_{i},\,x_{i1},\ldots ,x_{ip}\}_{i=1}^{n}}$ of n statistical units, the model takes the form:
+$$
+y_{i}=\beta _{1}x_{i1}+\cdots +\beta _{p}x_{ip}+\varepsilon _{i}=\mathbf {x} _{i}^{\rm {T}}{\boldsymbol {\beta }}+\varepsilon _{i},\qquad i=1,\ldots ,n,
+$$
+where,  
+$y_{i}$ is the response variable,  
+$x_{i1},\,x_{i2},\,\ldots ,\,x_{ip}$ are the regressors,  
+$\beta$ is a p-dimensional parameter vector (estimated by least-squares method)  
+$\epsilon_{i}$ is the error term.  
+
+### Fitting the Model
+
+We will regress the *mpg* variable onto *disp, cyl, am*. A linear model is fitted by least-squares, which minimizes the sum of squared residuals and  leads to a closed-form expression for the estimated value of the unknown parameter $\boldsymbol \beta$.  
+
+Objective:
+$$
+{\hat {\boldsymbol {\beta }}}={\rm {arg}}\min _{\boldsymbol \beta }\,\left\lVert \mathbf {y}-\mathbf {X}{\boldsymbol \beta } \right\rVert ,
+$$
+
+which leads to:
+$$
+{\hat {\boldsymbol {\beta }}}=(\mathbf {X} ^{\rm {T}}\mathbf {X} )^{-1}\mathbf {X} ^{\rm {T}}\mathbf {y} ={\big (}\,{\textstyle \sum }\mathbf {x} _{i}\mathbf {x} _{i}^{\rm {T}}\,{\big )}^{-1}{\big (}\,{\textstyle \sum }\mathbf {x} _{i}y_{i}\,{\big )}.
+$$
+
+```{r createmodel}
+model <- lm(mpg ~ cyl + disp + am, data = mtcars)
+model$coefficients
+```
+
+```{r summary, echo=FALSE}
+model.summ <- summary(model)
+```
+
+Adjusted R-squared: `r model.summ$adj.r.squared`  
+F-statistic: `r model.summ$fstatistic[1]`
+
+```{r residualplot, echo=FALSE, fig.width=5, fig.height=4}
+source("lmplots.R")
+diagPlot(model)$rvfPlot
+```
+
+```{r predictsales}
+# sales vs predicted sales
+head(data.frame(mpg = mtcars$mpg, pred = predict(model)), 10)
+```
+<br/>
+  
+  
+## LOESS
+
+Suppose a dataset consists of $N$ pairs of observations, $\{(x_i, y_i)\}_{i=1}^N$. For fitting a point $x$, define a bandwidth $h(x)$ and a smoothing window $(x−h(x),\,x+h(x))$. The LOWESS algorithm finds the vector $\boldsymbol\beta$ of coefficients which minimizes the locally weighted sum of squares
+$$
+\boldsymbol{\hat\beta} = \underset {\boldsymbol\beta \in \mathbb R^{p + 1}}{\arg\min} \sum_{i=1}^N w_i(x)(y_i - \langle{\boldsymbol\beta, \, A(x_i - x)}\rangle)^2
+$$
+where,  
+$$
+\begin{align}
+A_0(v) = 1, &&
+A_k(v) = \frac {v^k}{k!}, && 
+w_i(x) = W\left(\frac {x_i - x}{h(x)}\right),
+\end{align}
+$$
+$W(u)$ is a weight function that assigns largest weight to observations close to $x$.  
+
+The local regression estimate is
+$$
+\hat f(x) = \langle \boldsymbol {\hat\beta}, \, A(0) \rangle = \boldsymbol {\hat\beta}_0.
+$$
+
+
+```{r loess}
+set.seed(19)
+
+period <- 120
+x <- 1:period
+y <- sin(2*pi*x/period) + runif(length(x),-1,1)
+
+spanlist <- c(0.10, 0.25, 0.50, 0.75, 1.00, 2.00)
+loess.lines <- sapply(spanlist, function(s) {
+  y.loess <- loess(y ~ x, span = s, data.frame(x = x, y = y))
+  cat("span = ", format(s, nsmall = 2), ", rse: ", y.loess$s, "\n", sep = "")
+  predict(y.loess)
+})
+```
+<br/>  
+  
+```{r loessplot, echo=FALSE, fig.width=7, fig.height=4}
+colnames(loess.lines) <- paste("span =", spanlist)
+loess.plt <- stack(as.data.frame(loess.lines))
+loess.plt <- cbind(loess.plt, x = x)  # recycle x
+ggplot(loess.plt, aes(x = x, y = values, group = ind, color = ind)) +
+  geom_line(size = 0.5) +
+  geom_point(aes(x, y), data = data.frame(x, y), inherit.aes = F) +
+  scale_color_discrete("") +
+  ggtitle("LOESS Smoothing") +
+  theme_bw()
+```
+<br/>
+
+
+## Logistic Regression
+
+Formally, the logistic regression model is that
+$$
+\log {\frac {p(x)}{1 - p(x)}} = \beta_0 + \beta^T x.
+$$
+Suppose that we are given a sample $(x_i, y_i)$, $i = 1,\ldots,n$, where $y_i$ denotes the class $\in \{1, 2\}$ of the $i$-th observation. Then, assuming that the class labels are conditionally independent, the log-likelihood is given by
+$$
+\begin{aligned}
+\ell(\beta_0, \beta) &= \sum_{i=1}^n \log {P(C = y_i \mid X = x_i)} &\\
+                     &= \sum_{i=1}^n \left\{u_i \cdot (\beta_0 + \beta^T x_i) - \log {(1 + \exp (\beta_0 + \beta^T x_i))} \right\}
+\end{aligned}
+$$
+where, 
+$$
+\begin{align}
+u_i = \begin{cases} 1 & {\mbox{if }} y_i = 1 \\
+                    0 & {\mbox{if }} y_i = 2 \end{cases} 
+\end{align}
+$$
+
+The coefficients are estimated by maximizing the likelihood,
+$$
+\hat\beta_0, \hat\beta = \underset {\beta_0 \in \mathbb R, \beta \in \mathbb R^p}{\arg \max} \ell(\beta_0, \beta)
+$$
+
+```{r logreg}
+mtcars.glm <- glm(vs ~ mpg, data = mtcars, family = binomial)
+mtcars.glm
+```
+<br/>  
+  
+```{r logregplot, echo=FALSE, fig.width=5, fig.height=3.5}
+ggplot(mtcars, aes(x = mpg, y = vs)) +
+  theme_bw(base_size=16) +
+  geom_point(alpha = 0.5, position = position_jitter(w = 0, h = 0.02)) +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), 
+              se = TRUE, colour = 'red', alpha = 0.3, fill = "grey") +
+  labs(y = "Probability", x = "mpg")
+```
+
+
+

@@ -1,0 +1,143 @@
+---
+title: "Clustering"
+output: 
+  html_document: 
+    css: ../css/custom.css
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(cluster)
+library(grid)
+source('multiplot.R')
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(10008)
+```
+
+```{r loaddata, include=FALSE}
+noisy.moons <- read.csv('../data/noisy_moons.csv')
+noisy.circles <- read.csv('../data/noisy_circles.csv')
+blobs <- read.csv('../data/blobs.csv')
+noisy.moons$y <- as.factor(noisy.moons$y)
+noisy.circles$y <- as.factor(noisy.circles$y)
+blobs$y <- as.factor(blobs$y)
+```
+
+## Dataset
+
+Three simulated datasets `noisy.circles`, `noisy.moons`, `blobs` of 1500 observations x 2 features containing 2, 2, and 3 clusters respectively.
+
+```{r descdata}
+head(noisy.circles)
+```
+
+```{r plotcluster, echo=FALSE, fig.width=9, fig.height=2.5}
+plotCluster <- function(c1, c2, c3) {
+  p1 <- ggplot(noisy.circles, aes(x = x1, y = x2, color = as.factor(c1))) + 
+    geom_point(size = 0.5) +
+    ggtitle('Circles') +
+    scale_color_discrete("y")
+  p2 <- ggplot(noisy.moons, aes(x = x1, y = x2, color = as.factor(c2))) +  
+    geom_point(size = 0.5) +
+    ggtitle('Moons') +
+    scale_color_discrete("y")
+  p3 <- ggplot(blobs, aes(x = x1, y = x2, color = as.factor(c3))) + 
+    geom_point(size = 0.5) +
+    ggtitle('Blobs') +
+    scale_color_discrete("y")
+  multiplot(p1, p2, p3, cols = 3)
+}
+```
+
+```{r dataset, echo=FALSE, fig.width=9, fig.height=2.5}
+plotCluster(noisy.circles$y, noisy.moons$y, blobs$y)
+```
+
+
+## k-means
+
+The k-means optimization problem is to find the set C of cluster centers $\mathbf c \in \mathbb R^m$, with $|C| = k$, to minimize over a set of examples $\mathbf x \in \mathbb R^m$ the following objective function:
+$$
+\min \sum_{\mathbf x \in X} ||f(C, \mathbf x) - \mathbf x||^2
+$$
+Here, $f(C, \mathbf x)$ returns the nearest cluster center $\mathbf c \in C$ to $\mathbf x$ using Euclidean distance.
+
+```{r kmeans}
+noisy.circles.km <- kmeans(noisy.circles[,1:2], centers = 2, iter.max = 100,
+                           nstart = 10)
+noisy.moons.km <- kmeans(noisy.moons[,1:2], centers = 2, iter.max = 100,
+                         nstart = 10)
+blobs.km <- kmeans(blobs[,1:2], centers = 3, iter.max = 100,
+                   nstart = 10)
+
+head(noisy.circles.km$cluster, 10)
+```
+
+```{r kmcenter}
+noisy.circles.km$centers
+```
+
+```{r kmplot, echo=FALSE, fig.width=9, fig.height=2.5}
+plotCluster(noisy.circles.km$cluster - 1, noisy.moons.km$cluster - 1, 
+            blobs.km$cluster - 1)
+```
+
+
+
+## k-medoids
+
+Similar to the k-means algorithm, but in the k-medoids algorithm, the center of the subset is a member of the subset, called a medoid (i.e., cluster centers $\mathbf c \in X$). In the k-means algorithm, the center of the subset is the centroid. 
+
+```{r pam}
+noisy.circles.pam <- pam(noisy.circles[,1:2], k = 2, cluster.only = T)
+noisy.moons.pam <- pam(noisy.moons[,1:2], k = 2, cluster.only = T)
+blobs.pam <- pam(blobs[,1:2], k = 3, cluster.only = T)
+
+head(noisy.circles.pam, 10)
+```
+
+```{r pamplot, echo=FALSE, fig.width=9, fig.height=2.5}
+plotCluster(noisy.circles.pam - 1, noisy.moons.pam - 1, blobs.pam - 1)
+```
+
+
+## Heirarchial Clustering
+
+Hierarchical clustering groups data into a multilevel cluster tree or dendrogram. *hclust()* constructs the agglomerative hierarchical cluster tree.  
+
+Model specifications:
+
+* Linkage criteria: Complete Linkage, $\max\{\,d(x,y):x\in {\mathcal  {A}},\,y\in {\mathcal  {B}}\,\}$
+  
+* Similarity measure: Euclidean distance, $d(x, y) = \|x - y\|_2$
+
+* Desired number of groups = 2, 2, 3 for *circles*, *moons*, *blobs* respectively. (This determines where to cut the tree).  
+
+```{r hclust}
+# euclidean distance and complete-linkage
+noisy.circles.hc <- hclust(dist(noisy.circles[,1:2]))
+noisy.circles.hc.clus <- cutree(noisy.circles.hc, k = 2)
+
+noisy.moons.hc <- hclust(dist(noisy.moons[,1:2]))
+noisy.moons.hc.clus <- cutree(noisy.moons.hc, k = 2)
+
+blobs.hc <- hclust(dist(blobs[,1:2]))
+blobs.hc.clus <- cutree(blobs.hc, k = 3)
+
+head(noisy.circles.hc.clus, 10)
+```
+
+```{r hcdendogram, echo=FALSE, fig.width=9, fig.height=5}
+plot(blobs.hc, labels = F, hang = -1, main = "Cluster Dendogram of Blobs",
+     xlab = "Observations", sub = "")
+rect.hclust(blobs.hc, k = 3, border = "red")
+```
+
+```{r hcplot, echo=FALSE, fig.width=9, fig.height=2.5}
+plotCluster(noisy.circles.hc.clus - 1, noisy.moons.hc.clus - 1, 
+            blobs.hc.clus - 1)
+```
+
+
+

@@ -1,0 +1,189 @@
+---
+title: "Dimensionality Reduction"
+output: 
+  html_document: 
+    theme: readable
+    css: ../css/custom.css
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(network)
+library(GGally)
+library(MASS)
+library(RColorBrewer)
+library(caret)
+data(iris)
+data(UScitiesD)
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+set.seed(1208151)
+
+# y <- sapply(data()$results[,3], function(x) { 
+#   data(list = x); try(dim(eval(parse(text = x))), silent = T) 
+# })
+# y[sapply(y, function(x) is.numeric(x) && (length(x) == 2) && 
+#                         (x[1] < 20) && (x[2] > 4))]
+```
+
+---
+
+## LDA
+
+The LDA method approximates the Bayes classifier assuming that the $p$-dimensional random variable $X$ is drawn from a multivariate Gaussian distribution ${\mathcal N}(\mu_k ,\, \mathbf\Sigma)$. The classifier assigns an observation $X = x$ to the class for which
+$$
+\hat\delta_k(x) = x^T \mathbf\Sigma^{-1} \mu_k - \frac{1}{2} \mu_k^T \mathbf\Sigma^{-1} \mu_k + \log {\pi_k}
+$$
+is largest. $\hat\delta_k(x)$ is the discriminant function, and $\pi_k$ is the class membership probability.
+
+```{r lda}
+model.lda <- lda(Species ~ ., iris, prior = c(1, 1, 1) / 3)
+model.lda$means
+model.lda$scaling
+model.lda$svd
+confusionMatrix(predict(model.lda)$class, iris$Species)$table
+```
+
+```{r ldaplot, echo=FALSE}
+require(scales)
+require(gridExtra)
+
+pca <- prcomp(iris[,-5])
+prop.pca <- pca$sdev^2 / sum(pca$sdev^2)
+
+prop.lda <- model.lda$svd^2 / sum(model.lda$svd^2)
+pred.lda <- predict(model.lda)
+
+dataset <- data.frame(Species = iris[, "Species"], 
+                      pca = pca$x, lda = pred.lda$x)
+
+p1 <- ggplot(dataset) + 
+  geom_point(aes(lda.LD1, lda.LD2, colour = Species, shape = Species), 
+             size = 1.5) + 
+  labs(x = paste0("LD1 (", percent(prop.lda[1]), ")"),
+       y = paste0("LD2 (", percent(prop.lda[2]), ")"),
+       title = "LDA Projection") +
+  theme_bw(base_size = 8)
+
+p2 <- ggplot(dataset) + 
+  geom_point(aes(pca.PC1, pca.PC2, colour = Species, shape = Species), 
+             size = 1.5) +
+  labs(x = paste("PC1 (", percent(prop.pca[1]), ")"),
+       y = paste("PC2 (", percent(prop.pca[2]), ")"),
+       title = "PCA Projection") + 
+  theme_bw(base_size = 8)
+
+grid.arrange(p1, p2)
+```
+<br/>
+
+
+## QDA
+Unlike LDA, QDA assumes that each class has its own covariance matrix. That is, it assumes that an observation from the $k$th class is of the form $X \sim {\mathcal N} (\mu_k ,\, \mathbf\Sigma_k)$.
+$$
+\hat\delta_k(x) = -\frac{1}{2} {(x - \mu_k)}^T \Sigma_k^{-1} (x - \mu_k) -\frac{1}{2} \log {|\mathbf\Sigma_k|} + \log {\pi_k}
+$$
+
+```{r qda}
+model.qda <- qda(Species ~ ., iris, prior = c(1, 1, 1) / 3)
+model.qda$means
+ftable(model.qda$scaling, row.vars = c(1, 3))
+confusionMatrix(predict(model.qda)$class, iris$Species)$table
+```
+
+```{r qdaplt, echo=FALSE, fig.width=7, fig.height=4}
+# NOTE: plotLearnerPrediction trains the model only for 1 or 2 features. This isn't the expected result. The required figure is the decision boundary in a reduced QDA variable space, of the model trained with all features.
+require(mlr)
+# classif.qda uses MASS::qda
+model.qdaplt <- makeLearner("classif.qda")
+configureMlr(on.par.without.desc = "quiet")
+plotLearnerPrediction(model.qdaplt, iris.task, prior = c(1, 1, 1) / 3,
+                      gridsize = 250) +
+  theme_bw(base_size = 8)
+```
+<br/>
+
+
+## PCA
+
+Rotates the axes of original variable coordinate system to new orthogonal axes, called principal components, such that the new axes coincide with the directions of maximum variation of the original observations. The first principal component of a set of features $X_1, X_2,\ldots, X_p$ is the normalized linear combination of the features
+$$
+Z_1 = \phi_{11} X_1 + \phi_{21} X_2 + \ldots + \phi_{p1} X_p
+$$
+that has the largest variance. Assuming that the features in $\mathbf X$ has been centered, $Z_1$ solves the optimization problem
+$$
+\underset {\phi_{11}, \ldots, \phi_{p1}}{\arg \max} \left\{ \frac{1}{n} \sum_{i=1}^n {\left( \sum_{j=1}^p \phi_{j1} x_{ij}\right)}^2 \right\} \text {  subject to } \sum_{j=1}^p \phi_{j1}^2 = 1.
+$$
+At the $k$-th stage a linear function $\boldsymbol\phi_k^T \mathbf x$ is found that has maximum variance subject to being uncorrelated with $Z_1, Z_2, \ldots, Z_{k-1}$.
+
+```{r pcadata}
+# Generates sample matrix of five discrete clusters that have very different 
+# mean and standard deviation values.
+pca.data <- matrix(c(rnorm(10000, mean = 1, sd = 1), 
+                     rnorm(10000, mean = 3, sd = 3),
+                     rnorm(10000, mean = 5, sd = 5),
+                     rnorm(10000, mean = 7, sd = 7),
+                     rnorm(10000, mean = 9, sd = 9)), 
+                   nrow = 2500, ncol = 20, byrow = T, 
+                   dimnames = list(paste0("R", 1:2500), 
+                                   paste0("C", 1:20)))
+```
+
+```{r pca}
+pca <- prcomp(pca.data, scale = T)
+summary(pca)$importance[, 1:5]
+```
+
+```{r pcaplot, echo=FALSE, fig.width=15, fig.height=5}
+require(geneplotter)
+require(scatterplot3d)
+mycolors <- adjustcolor(brewer.pal(5, "Set2"), alpha.f = 0.8)
+par(mfrow = c(1, 3))
+plot(pca$x, pch = 20, col = mycolors[rep(1:5, each = 500)])
+# shows the density of the data points
+smoothScatter(pca$x, colramp = colorRampPalette(brewer.pal(11, "RdYlGn")), 
+              nbin = 256, nrpoints = 0) 
+scatterplot3d(pca$x[, 1:3], pch = 20, color = mycolors[rep(1:5, each = 500)])
+```
+<br/>
+
+
+## Classical MDS
+
+Classical MDS rests on the following equation: Let $\mathbf X$ be the $n \times p$ matrix of point coordinates (assumed here to be column-centered for simplicity); then, the matrix of squared Euclidean distances with elements $d_{ij}(\mathbf X) = \sum_{s=1}^p (x_{is} - x_{js})^2$ is
+$$
+\mathbf D^{(2)} = \mathbf {1 \boldsymbol\alpha'} + \mathbf {\boldsymbol\alpha 1'} - 2 \mathbf {X X'}
+$$
+where $\mathbf 1$ is a vector of ones of appropriate length and $\boldsymbol\alpha$ the vector with diagonal elements of $\mathbf {XX'}$. Given $\mathbf D$, $\mathbf X$ is found as follows. Let $\mathbf J = \mathbf I -  \mathbf {11'} / \mathbf {1'1}$ be the centering matrix,  $-1/2 \, \mathbf J \mathbf D^{(2)} \mathbf J = \mathbf {XX'}$. Then the eigendecomposition of $-1/2 \, \mathbf J \mathbf D^{(2)} \mathbf J$ is $\mathbf {Q \Lambda Q'}$, and so $\mathbf X = \mathbf Q \mathbf\Lambda^{1/2}$. If the matrix of dissimilarities $\mathbf\Delta$ is not euclidean it can be approximated by $\mathbf\Delta^{(2)}$ for $\mathbf D^{(2)}$.  
+
+Classical MDS minimizes the *Strain loss* function
+$$
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+Strain(\mathbf X) = \norm {(-1 / 2 \, \mathbf J \mathbf\Delta^{(2)} \mathbf J) - \mathbf {XX'}} ^2
+$$
+
+We will use the `UScitiesD` dataset that gives the straight line distances between 10 cities in the US.
+
+```{r mds}
+# inspect first five elements
+as.matrix(UScitiesD)[1:5, 1:5]
+
+model.mds <- cmdscale(UScitiesD)
+model.mds
+```
+
+```{r mdsplot, echo=FALSE}
+n <- nrow(model.mds)
+net <- network(matrix(1, n, n), directed = FALSE,
+               vertex.attr = list(vertex.names = rownames(model.mds)))
+ggnet2(net, mode = model.mds, color = "gold", label.color = "grey30",
+       edge.color = "wheat2", size = 15, label = "vertex.names", label.size = 3) +
+  coord_fixed(ratio = 1) +
+  scale_x_continuous(expand = c(0.15, 0), breaks = NULL) +
+  scale_y_continuous(expand = c(0.15, 0), breaks = NULL) +
+  ggtitle("MDS clustering of US City-City Distances")
+```
+
+
+
+
+

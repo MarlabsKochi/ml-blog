@@ -1,0 +1,142 @@
+---
+title: "Rule Generation"
+output: 
+  html_document: 
+    css: ../css/custom.css
+    theme: readable
+---
+
+```{r setup, include=FALSE}
+library(RWeka)
+library(scatterplot3d)
+library(ggplot2)
+library(GGally)
+library(reshape2)
+data(mtcars)
+data(iris)
+set.seed(1)
+```
+
+
+## Dataset
+
+`mtcars`: Fuel consumption and 10 aspects of automobile design and performance for 32 automobiles. A data frame with 32 observations on 11 variables:
+
+*	_mpg_:	 Miles/(US) gallon
+*	_cyl_:	 Number of cylinders
+*	_disp_:	 Displacement (cu.in.)
+* _hp_:	 Gross horsepower
+* _drat_:	 Rear axle ratio
+* _wt_:	 Weight (1000 lbs)
+* _qsec_:	 1/4 mile time
+* _vs_:	 V/S
+* _am_:	 Transmission (0 = automatic, 1 = manual)
+* _gear_:	 Number of forward gears
+* _carb_:	 Number of carburetors
+
+```{r data_mtcars}
+head(mtcars)
+```
+
+
+```{r data_mtcars_plot, echo=FALSE, fig.width=8, fig.height=6}
+mtcars.sp <- mtcars
+mtcars.sp$pcolor[mtcars.sp$cyl == 4] <- "red"
+mtcars.sp$pcolor[mtcars.sp$cyl == 6] <- "blue"
+mtcars.sp$pcolor[mtcars.sp$cyl == 8] <- "darkgreen"
+with(mtcars.sp, {
+  s3d <- scatterplot3d(disp, wt, mpg,                # x y and z axis
+                       color = pcolor, pch = 19,     # circle color indicates no. of cylinders
+                       type = "h", lty.hplot = 2,    # lines to the horizontal plane
+                       scale.y = .75,                # scale y axis (reduce by 25%)
+                       main = "mtcars",
+                       xlab = "Displacement (cu. in.)",
+                       ylab = "Weight (lb/1000)",
+                       zlab = "Miles/(US) Gallon")
+  s3d.coords <- s3d$xyz.convert(disp, wt, mpg)
+  text(s3d.coords$x, s3d.coords$y,     # x and y coordinates
+       labels = row.names(mtcars.sp),  # text to plot
+       pos = 4, cex = .5)              # shrink text 50% and place to right of points)
+  # add the legend
+  legend("topleft", inset = .05,      # location and inset
+         bty = "n", cex = .5,         # suppress legend box, shrink text 50%
+         title = "Number of Cylinders",
+         c("4", "6", "8"), fill = c("red", "blue", "darkgreen"))
+})
+```
+
+`iris`: Gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. A data frame with 150 cases (rows) and 5 variables (columns) named:
+
+* _Sepal.Length_
+* _Sepal.Width_
+* _Petal.Length_
+* _Petal.Width_
+* _Species_
+
+```{r data_iris}
+head(iris)
+```
+
+```{r echo=FALSE, data_iris_plot, fig.width=8, fig.height=7}
+ggpairs(iris, aes(color = Species, alpha = 0.4), columns = 1:4, title = "iris",
+        columnLabels = c("SL", "SW", "PL", "PW"), upper = "blank") 
+```
+
+
+## OneR
+
+Generates a one-level decision tree expressed in the form of a set of rules that all test one particular attribute. 1R chooses the attribute that produces rules with the smallest error rate.
+
+```{r oner}
+mod.oner <- OneR(Species ~ ., data = iris)
+print(mod.oner)
+```
+
+
+## M5
+
+Constructed by first using a decision tree induction algorithm minimizing intrasubset variation in the class values down each branch.
+
+Splitting criterion: Maximize *standard deviation reduction*,
+$$
+SDR = sd(T) − \sum_i{\frac{|T_i|}{|T|} * sd(T_i)},
+$$
+where $T_1, T_2, ...$ are the sets that result from splitting the node according to the
+chosen attribute, and $sd(T)$ is the standard deviation of the class values.  
+
+A linear model is built for each interior node of the tree and using a greedy search removes variables that contribute little. M5 then applies pruning by subtree replacement. And finally the prediction accuracy is improved by a smoothing process,
+$$
+PV(S) = \frac{n_i \times PV(S_i) + k \times M(S)}{n_i + k},
+$$
+where $PV(S_i)$ is the predicted value at branch $S_i$ of subtree S,  
+$M(S)$ is the value given by the model at $S$,  
+$n_i$ is the number of training cases at $S_i$, and  
+$k$ is a smoothing constant.
+
+```{r m5model}
+mod.m5 <- M5Rules(mpg ~ ., data = mtcars)
+print(mod.m5)
+```
+
+
+## RIPPER
+
+RIPPER is a variant of the original __IREP__ (incremental reduced error pruning, integration of reduced error pruning with a separate-and-conquer rule learning) algorithm with three modifications:
+
+* Alternative metric for guiding its pruning phase: Deletes of _any final sequence of conditions_ from the rule to maximize the function
+$$
+v^*(Rule, PrunePos, PruneNeg) \equiv \frac{p - n}{p + n},
+$$
+where $P$ (respectively $N$) is the total number of examples in $PrunePos$ ($PruneNeg$) and $p$ ($n$) is the number of examples in $PrunePos$ ($PruneNeg$) covered by $Rule$.
+
+* A new Stopping condition: After each rule is added, the total _description length_ of the ruleset and the examples is computed, and stops adding rules when this description is more than _d_ bits larger than the smallest description length obtained so far.
+
+* Optimization of initial rules learned by IREP: Considered in the order they were constructed, for each rule $R_i$ two alternatives are constructed: a _replacement_ $R_i'$ (exclude $R_i$ and minimize error of ruleset), and a _revised_ $R_i$ (greedily adding conditions to $R_i$). A MDL heuristic is used to decide whether the final theory should include the replacement, revised, or original rule.
+
+
+```{r ripper}
+mod.rip <- JRip(Species ~ ., data = iris)
+print(mod.rip)
+```
+
+
