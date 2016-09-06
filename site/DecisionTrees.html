@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Decision Trees</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="site_libs/highlight/default.css"
+      type="text/css" />
+<script src="site_libs/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="../css/custom.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Machine Learning</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Algorithm
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Regression.html">Regression</a>
+    </li>
+    <li>
+      <a href="Regularization.html">Regularization</a>
+    </li>
+    <li>
+      <a href="clustering.html">Clustering</a>
+    </li>
+    <li>
+      <a href="DecisionTrees.html">Decision Trees</a>
+    </li>
+    <li>
+      <a href="nnet.html">Neural Networks</a>
+    </li>
+    <li>
+      <a href="Ensemble.html">Ensemble Learning</a>
+    </li>
+    <li>
+      <a href="nbayes.html">Naive Bayes</a>
+    </li>
+    <li>
+      <a href="rules.html">Rule based Learning</a>
+    </li>
+    <li>
+      <a href="DimReduction.html">Dimensionality Reduction</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Decision Trees</h1>
+
+</div>
+
+
+<div id="dataset" class="section level2">
+<h2>Dataset</h2>
+<p><code>iris</code>: The famous Fisher’s iris data set provided as a data frame with 150 cases (rows), and 5 variables (columns) named <em>Sepal.Length</em>, <em>Sepal.Width</em>, <em>Petal.Length</em>, <em>Petal.Width</em>, and <em>Species</em>.</p>
+<pre class="r"><code>head(iris)</code></pre>
+<pre><code>##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1          5.1         3.5          1.4         0.2  setosa
+## 2          4.9         3.0          1.4         0.2  setosa
+## 3          4.7         3.2          1.3         0.2  setosa
+## 4          4.6         3.1          1.5         0.2  setosa
+## 5          5.0         3.6          1.4         0.2  setosa
+## 6          5.4         3.9          1.7         0.4  setosa</code></pre>
+<p><img src="DecisionTrees_files/figure-html/dataplot-1.png" title="" alt="" width="672" /></p>
+</div>
+<div id="cart" class="section level2">
+<h2>CART</h2>
+<p>CART methodology consists of three parts:</p>
+<ol style="list-style-type: decimal">
+<li><p>Construction of maximum tree (binary). At each node CART solves the following maximization problem: <span class="math display">\[
+  \underset {x_j \le \, x_j^R, \, j=1,\ldots,M} {\arg \max} \left[ i(t_p) - P_l i(t_l) - P_r i(t_r) \right]
+  \]</span> where <span class="math inline">\(t_p, t_l, t_r\)</span> are the parent, left and right nodes; <span class="math inline">\(x_j\)</span> is the <span class="math inline">\(j\)</span>-th attribute; <span class="math inline">\(x_j^R\)</span> is the best split value; <span class="math inline">\(i(t)\)</span> is the impurity function; <span class="math inline">\(P_l, P_r\)</span> are the probabiliites of left and right nodes. Gini index is used as the splitting criterion, <span class="math display">\[
+  i_G(t) = \sum_{k \neq l} p(k \vert t) p(l \vert t)
+  \]</span> where <span class="math inline">\(k, l\)</span> is the index of the class; and <span class="math inline">\(p(k \vert t)\)</span> is the conditional probability of class <span class="math inline">\(k\)</span> provided we are in node <span class="math inline">\(t\)</span>.</p></li>
+<li>Choice of the right tree size
+<ul>
+<li>Optimization by min number of points for split <span class="math inline">\(N_{min}\)</span></li>
+<li>Optimal tree pruning by cross-validation which uses the cost-complexity function: <span class="math display">\[
+   R_{\alpha}(T) = R(T) + \alpha (\tilde T) \longrightarrow \underset {T}{min}
+   \]</span> where <span class="math inline">\(R(T)\)</span> = misclassification error of the tree <span class="math inline">\(T\)</span>; <span class="math inline">\(\alpha(\tilde T)\)</span> = complexity measure depending on <span class="math inline">\(\tilde T\)</span>; <span class="math inline">\(\alpha\)</span> is a parameter found by in-sample testing.</li>
+</ul></li>
+<li><p>Classification of new data using constructed tree</p></li>
+</ol>
+<pre class="r"><code>model.cart &lt;- rpart(Species ~., data = iris, 
+                    control = rpart.control(minbucket = 10, cp = 0))
+nodes.summ &lt;- summary(model.cart, file = tempfile())$frame
+subset(nodes.summ, select = -yval2)</code></pre>
+<pre><code>##            var   n  wt dev yval complexity ncompete nsurrogate
+## 1 Petal.Length 150 150 100    1       0.50        3          3
+## 2       &lt;leaf&gt;  50  50   0    1       0.00        0          0
+## 3  Petal.Width 100 100  50    2       0.44        3          3
+## 6       &lt;leaf&gt;  54  54   5    2       0.00        0          0
+## 7       &lt;leaf&gt;  46  46   1    3       0.00        0          0</code></pre>
+<pre class="r"><code>confusionMatrix(predict(model.cart, type = &quot;class&quot;), iris$Species)$table</code></pre>
+<pre><code>##             Reference
+## Prediction   setosa versicolor virginica
+##   setosa         50          0         0
+##   versicolor      0         49         5
+##   virginica       0          1        45</code></pre>
+<p><img src="DecisionTrees_files/figure-html/cartplot-1.png" title="" alt="" width="576" /></p>
+</div>
+<div id="c4.5" class="section level2">
+<h2>C4.5</h2>
+<p>The tree construction algorithm is similar to CART. Notable differences include:</p>
+<ul>
+<li><p>Impurity measure is based on entropy. Gain Ratio is chosen as the splitting criterion. <span class="math display">\[
+  i_E(t) = - \sum_{k=1}^K p(k \vert t) \log_2 p(k \vert t),
+  \]</span> where <span class="math inline">\(p(k \vert t) = freq(C_k, t) / n\)</span>, the probability that an instance in <span class="math inline">\(t\)</span> belongs to class <span class="math inline">\(C_k\)</span>. Suppose a test <span class="math inline">\(X\)</span> partitions <span class="math inline">\(n\)</span> instances in node <span class="math inline">\(t\)</span> into <span class="math inline">\(s\)</span> subsets, via child nodes <span class="math inline">\(t_1, \ldots t_s\)</span> with <span class="math inline">\(n_j\)</span> denoting the number of test instances going down node <span class="math inline">\(t_j\)</span>, <span class="math display">\[
+  i_E^{(X)}(t) = \sum_{j=1}^s \frac {n_j}{n} \times i_E(t_j),        \\
+  gain(X) = i_E(t) - i_E^{(X)}(t),                                   \\
+  split\_info(X) = \sum_{j=1}^s \frac {n_j}{n} \times 
+               \log_2 \frac {n_j}{n},                            \\
+  gain\_ratio(X) = gain(X) \,/\, split\_info(X)
+  \]</span></p></li>
+<li><p>Like CART applies post pruning to simplify results. Given a confidence interval <span class="math inline">\(CF\)</span> (default 25%), let <span class="math inline">\(N\)</span> be the number of training instances in a leaf, and <span class="math inline">\(E\)</span> denote the resubstitution error rate <span class="math inline">\(f = E/N\)</span>. The prediction error is estimated as <span class="math inline">\(N \times U_{CF}(E, N)\)</span>, where <span class="math inline">\(U_{CF}(E, N)\)</span> is the upper confidence limit from binomial distribution <span class="math inline">\(B(N, f)\)</span>.</p></li>
+<li><p>Offers windowing, construction of trees for subsets of large training data. If resulting tree is not accurate enough to classify the cases out of the window, then an enlarged window is considered iteratively until convergence.</p></li>
+<li><p>Reduction of number of outcomes of multivalued attributes by finding value groups.</p></li>
+</ul>
+<pre class="r"><code>model.c45 &lt;- J48(Species ~ ., data = iris,
+                 control = Weka_control(R = TRUE, M = 10))
+summary(model.c45)</code></pre>
+<pre><code>## 
+## === Summary ===
+## 
+## Correctly Classified Instances         142               94.6667 %
+## Incorrectly Classified Instances         8                5.3333 %
+## Kappa statistic                          0.92  
+## Mean absolute error                      0.0524
+## Root mean squared error                  0.182 
+## Relative absolute error                 11.7831 %
+## Root relative squared error             38.6033 %
+## Coverage of cases (0.95 level)          98      %
+## Mean rel. region size (0.95 level)      44.8889 %
+## Total Number of Instances              150     
+## 
+## === Confusion Matrix ===
+## 
+##   a  b  c   &lt;-- classified as
+##  50  0  0 |  a = setosa
+##   0 45  5 |  b = versicolor
+##   0  3 47 |  c = virginica</code></pre>
+<p><img src="DecisionTrees_files/figure-html/c45plot-1.png" title="" alt="" width="672" /></p>
+</div>
+<div id="conditional-inference-trees" class="section level2">
+<h2>Conditional Inference Trees</h2>
+<p><em>ctree</em> uses permutation tests for variable selection and a separate splitting procedure which can be based on any split criterion.</p>
+<ul>
+<li><p>In step 1, we select the covariate with minimum <span class="math inline">\(P\)</span>-value, i.e., the covariate <span class="math inline">\(X_{j^*}\)</span> with <span class="math inline">\({argmin}_{j^* = 1,\ldots,m} \, P_j\)</span>, where <span class="math display">\[
+P_j = \mathbb P_{H_0^j}(c({\mathbf T}_j(\mathcal {L_n}, \mathbf w), \mu_j, \Sigma_j) \ge
+                    c({\mathbf t}_j, \mu_j, \Sigma_j) \mid S(\mathcal {L_n}, \mathbf w))
+\]</span> denotes <span class="math inline">\(P\)</span>-value of the conditional test for <span class="math inline">\(H_0^j\)</span> (partial null hypothesis of independence between the covariate <span class="math inline">\(X_j\)</span> and <span class="math inline">\(Y\)</span>).<br />
+<span class="math inline">\(c\)</span> is a univariate test statistic mapping an observed multivariate linear statistic <span class="math inline">\(t \in \mathbb R^{pq}\)</span> into the real line. <span class="math inline">\(\mathbf T\)</span> is a linear statistic which measures the association between <span class="math inline">\(Y\)</span> and <span class="math inline">\(X_j\)</span>: <span class="math display">\[
+\mathbf T_j(\mathcal {L_n}, \mathbf w) = vec \left( \sum_{i=1}^n w_i g_j(X_{ji}) h(Y_i, (Y_1, \ldots, Y_n))^T \right) \in \mathbb R^{p_j q}
+\]</span> where <span class="math inline">\(g_j : \mathcal X_j \rightarrow \mathbb R_{p_j}\)</span> is a non random transformation of the covariate <span class="math inline">\(X_j\)</span>,<br />
+<span class="math inline">\(h: \mathcal Y \times \mathcal Y^j \rightarrow \mathbb R_q\)</span> is the influence function.<br />
+<span class="math inline">\(\mu_j \in \mathbb R^{p_j q}\)</span> is the conditional expectation, and <span class="math inline">\(\Sigma_j \in \mathbb R^{p_j q \times p_j q}\)</span> the covariance of <span class="math inline">\(\mathbf T_j(\mathcal {L_n}, \mathbf w)\)</span> under <span class="math inline">\(H_0 = \bigcap_{j=1}^m H_0^j\)</span>, given all permutations <span class="math inline">\(S(\mathcal {L_n}, \mathbf w)\)</span> of the elements <span class="math inline">\((1, \ldots, n)\)</span> with corresponding case weights <span class="math inline">\(w_i = 1\)</span>.</p></li>
+<li><p>In step 2, the goodness of split is evaluated by a two-sample linear statistic <span class="math inline">\(\mathbf T_{j^*}^A\)</span> which is a special case of <span class="math inline">\(\mathbf T_j\)</span> with <span class="math inline">\(g_{j^*}(X_{j^*i}) = I(X_{j^*i} \in A)\)</span>, where <span class="math inline">\(A \subset \mathcal X_{j^*}\)</span>. The split <span class="math inline">\(A^*\)</span> with a test statistic maximized over all possible subsets <span class="math inline">\(A\)</span> is established: <span class="math display">\[
+A^* = \underset {A} {\arg \max} \, c(\mathbf t_{j^*}^A, \mu_{j^*}^A, \Sigma_{j^*}^A).
+\]</span></p></li>
+</ul>
+<pre class="r"><code>model.ctree &lt;- ctree(Species ~ ., data = iris,
+                     control = ctree_control(minbucket = 10))
+confusionMatrix(predict(model.ctree), iris$Species)$table</code></pre>
+<pre><code>##             Reference
+## Prediction   setosa versicolor virginica
+##   setosa         50          0         0
+##   versicolor      0         49         5
+##   virginica       0          1        45</code></pre>
+<p><img src="DecisionTrees_files/figure-html/ctreeplot-1.png" title="" alt="" width="672" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
