@@ -1,0 +1,157 @@
+---
+title: "Decision Trees"
+output: 
+  html_document: 
+    theme: readable
+    css: ../css/custom.css
+---
+
+```{r setup, include=FALSE}
+library(rpart)
+library(rattle)
+library(rpart.plot)
+library(RWeka)
+library(partykit)
+library(RColorBrewer)
+library(caret)
+library(ggplot2)
+library(scales)
+library(reshape2)
+data(iris)
+.pardefault <- par(no.readonly = T)
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(8812)
+```
+
+
+## Dataset
+
+`iris`: The famous Fisher's iris data set provided as a data frame with 150 cases (rows), and 5 variables (columns) named _Sepal.Length_, _Sepal.Width_, _Petal.Length_, _Petal.Width_, and _Species_.
+
+```{r data}
+head(iris)
+```
+
+```{r dataplot, echo=FALSE, fig.width=7, fig.height=4}
+x <- seq(-pi, pi, length = 100)
+y <- apply(sapply(iris[,1:4], rescale), 1,
+           function (u) u[1] / sqrt(2) + u[2] * cos(x) + u[3] * sin(x) + 
+             u[4] * cos(2*x))
+sy <- cbind(stack(as.data.frame(y)), 
+            x = x,    # recycle x
+            Species = rep(iris$Species, each = length(x)))
+pcolors <- brewer.pal(length(levels(iris$Species)), "Set1")
+pcolors <- adjustcolor(pcolors, alpha = 0.7)
+ggplot(sy) +
+  geom_line(aes(x = x, y = values, group = ind, color = Species)) +
+  labs(x = "", y = "", title = "Andrews curves with iris data") +
+  scale_color_manual(values = pcolors) +
+  theme_bw()
+```
+
+
+## CART
+
+CART methodology consists of three parts: 
+
+1. Construction of maximum tree (binary). At each node CART solves the following maximization problem:
+  $$
+  \underset {x_j \le \, x_j^R, \, j=1,\ldots,M} {\arg \max} \left[ i(t_p) - P_l i(t_l) - P_r i(t_r) \right]
+  $$
+  where $t_p, t_l, t_r$ are the parent, left and right nodes; $x_j$ is the $j$-th attribute; $x_j^R$ is the best split value; $i(t)$ is the impurity function; $P_l, P_r$ are the probabiliites of left and right nodes. Gini index is used as the splitting criterion,
+  $$
+  i_G(t) = \sum_{k \neq l} p(k \vert t) p(l \vert t)
+  $$
+  where $k, l$ is the index of the class; and $p(k \vert t)$ is the conditional probability of class $k$ provided we are in node $t$.
+  
+2. Choice of the right tree size
+     - Optimization by min number of points for split $N_{min}$
+     - Optimal tree pruning by cross-validation which uses the cost-complexity function:
+       $$
+       R_{\alpha}(T) = R(T) + \alpha (\tilde T) \longrightarrow \underset {T}{min}
+       $$
+       where $R(T)$ = misclassification error of the tree $T$; $\alpha(\tilde T)$ = complexity measure depending on $\tilde T$; $\alpha$ is a parameter found by in-sample testing.
+       
+3. Classification of new data using constructed tree
+
+```{r cart}
+model.cart <- rpart(Species ~., data = iris, 
+                    control = rpart.control(minbucket = 10, cp = 0))
+nodes.summ <- summary(model.cart, file = tempfile())$frame
+subset(nodes.summ, select = -yval2)
+confusionMatrix(predict(model.cart, type = "class"), iris$Species)$table
+```
+
+```{r cartplot, echo=FALSE, fig.width=6, fig.height=4}
+fancyRpartPlot(model.cart, sub = "")
+```
+
+
+## C4.5
+
+The tree construction algorithm is similar to CART. Notable differences include:  
+
+- Impurity measure is based on entropy. Gain Ratio is chosen as the splitting criterion.
+  $$
+  i_E(t) = - \sum_{k=1}^K p(k \vert t) \log_2 p(k \vert t),
+  $$
+  where $p(k \vert t) = freq(C_k, t) / n$, the probability that an instance in $t$ belongs to class $C_k$. Suppose a test $X$ partitions $n$ instances in node $t$ into $s$ subsets, via child nodes $t_1, \ldots t_s$ with $n_j$ denoting the number of test instances going down node $t_j$,
+  $$
+  i_E^{(X)}(t) = \sum_{j=1}^s \frac {n_j}{n} \times i_E(t_j),        \\
+  gain(X) = i_E(t) - i_E^{(X)}(t),                                   \\
+  split\_info(X) = \sum_{j=1}^s \frac {n_j}{n} \times 
+                   \log_2 \frac {n_j}{n},                            \\
+  gain\_ratio(X) = gain(X) \,/\, split\_info(X)
+  $$
+
+- Like CART applies post pruning to simplify results. Given a confidence interval $CF$ (default 25%), let $N$ be the number of training instances in a leaf, and $E$ denote the resubstitution error rate $f = E/N$. The prediction error is estimated as $N \times U_{CF}(E, N)$, where $U_{CF}(E, N)$ is the upper confidence limit from binomial distribution $B(N, f)$.
+
+- Offers windowing, construction of trees for subsets of large training data. If resulting tree is not accurate enough to classify the cases out of the window, then an enlarged window is considered iteratively until convergence.
+
+- Reduction of number of outcomes of multivalued attributes by finding value groups.
+
+```{r c45model}
+model.c45 <- J48(Species ~ ., data = iris,
+                 control = Weka_control(R = TRUE, M = 10))
+summary(model.c45)
+```
+
+```{r c45plot, echo=FALSE, fig.width=7, fig.height=5}
+plot(model.c45)
+```
+
+## Conditional Inference Trees
+
+_ctree_ uses permutation tests for variable selection and a separate splitting procedure which can be based on any split criterion.
+
+* In step 1, we select the covariate with minimum $P$-value, i.e., the covariate $X_{j^*}$ with ${argmin}_{j^* = 1,\ldots,m} \, P_j$, where
+$$
+P_j = \mathbb P_{H_0^j}(c({\mathbf T}_j(\mathcal {L_n}, \mathbf w), \mu_j, \Sigma_j) \ge
+                        c({\mathbf t}_j, \mu_j, \Sigma_j) \mid S(\mathcal {L_n}, \mathbf w))
+$$
+denotes $P$-value of the conditional test for $H_0^j$  (partial null hypothesis of independence between the covariate $X_j$ and $Y$).  
+$c$ is a univariate test statistic mapping an observed multivariate linear statistic $t \in \mathbb R^{pq}$ into the real line.
+$\mathbf T$ is a linear statistic which measures the association between $Y$ and $X_j$:
+$$
+\mathbf T_j(\mathcal {L_n}, \mathbf w) = vec \left( \sum_{i=1}^n w_i g_j(X_{ji}) h(Y_i, (Y_1, \ldots, Y_n))^T \right) \in \mathbb R^{p_j q}
+$$
+where $g_j : \mathcal X_j \rightarrow \mathbb R_{p_j}$ is a non random transformation of the covariate $X_j$,  
+$h: \mathcal Y \times \mathcal Y^j \rightarrow \mathbb R_q$ is the influence function.  
+$\mu_j \in \mathbb R^{p_j q}$ is the conditional expectation, and $\Sigma_j \in \mathbb R^{p_j q \times p_j q}$ the covariance of $\mathbf T_j(\mathcal {L_n}, \mathbf w)$ under $H_0 = \bigcap_{j=1}^m H_0^j$, given all permutations $S(\mathcal {L_n}, \mathbf w)$ of the elements $(1, \ldots, n)$ with corresponding case weights $w_i = 1$.
+
+* In step 2, the goodness of split is evaluated by a two-sample linear statistic $\mathbf T_{j^*}^A$ which is a special case of $\mathbf T_j$ with $g_{j^*}(X_{j^*i}) = I(X_{j^*i} \in A)$, where $A \subset \mathcal X_{j^*}$. The split $A^*$ with a test statistic maximized over all possible subsets $A$ is established:
+$$
+A^* = \underset {A} {\arg \max} \, c(\mathbf t_{j^*}^A, \mu_{j^*}^A, \Sigma_{j^*}^A).
+$$
+
+```{r ctreemodel}
+model.ctree <- ctree(Species ~ ., data = iris,
+                     control = ctree_control(minbucket = 10))
+confusionMatrix(predict(model.ctree), iris$Species)$table
+```
+
+```{r ctreeplot, echo=FALSE}
+plot(model.ctree)
+```
+
+
