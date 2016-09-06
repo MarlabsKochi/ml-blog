@@ -1,0 +1,8 @@
+
+pre > code {
+  font-size: 13px;
+}
+
+.tocify-hide {
+  visibility: hidden;
+}

@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Rule Generation</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="site_libs/highlight/default.css"
+      type="text/css" />
+<script src="site_libs/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="../css/custom.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Machine Learning</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Algorithm
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Regression.html">Regression</a>
+    </li>
+    <li>
+      <a href="Regularization.html">Regularization</a>
+    </li>
+    <li>
+      <a href="clustering.html">Clustering</a>
+    </li>
+    <li>
+      <a href="DecisionTrees.html">Decision Trees</a>
+    </li>
+    <li>
+      <a href="nnet.html">Neural Networks</a>
+    </li>
+    <li>
+      <a href="Ensemble.html">Ensemble Learning</a>
+    </li>
+    <li>
+      <a href="nbayes.html">Naive Bayes</a>
+    </li>
+    <li>
+      <a href="rules.html">Rule based Learning</a>
+    </li>
+    <li>
+      <a href="DimReduction.html">Dimensionality Reduction</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Rule Generation</h1>
+
+</div>
+
+
+<div id="dataset" class="section level2">
+<h2>Dataset</h2>
+<p><code>mtcars</code>: Fuel consumption and 10 aspects of automobile design and performance for 32 automobiles. A data frame with 32 observations on 11 variables:</p>
+<ul>
+<li><em>mpg</em>: Miles/(US) gallon</li>
+<li><em>cyl</em>: Number of cylinders</li>
+<li><em>disp</em>: Displacement (cu.in.)</li>
+<li><em>hp</em>: Gross horsepower</li>
+<li><em>drat</em>: Rear axle ratio</li>
+<li><em>wt</em>: Weight (1000 lbs)</li>
+<li><em>qsec</em>: 1/4 mile time</li>
+<li><em>vs</em>: V/S</li>
+<li><em>am</em>: Transmission (0 = automatic, 1 = manual)</li>
+<li><em>gear</em>: Number of forward gears</li>
+<li><em>carb</em>: Number of carburetors</li>
+</ul>
+<pre class="r"><code>head(mtcars)</code></pre>
+<pre><code>##                    mpg cyl disp  hp drat    wt  qsec vs am gear carb
+## Mazda RX4         21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+## Mazda RX4 Wag     21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+## Datsun 710        22.8   4  108  93 3.85 2.320 18.61  1  1    4    1
+## Hornet 4 Drive    21.4   6  258 110 3.08 3.215 19.44  1  0    3    1
+## Hornet Sportabout 18.7   8  360 175 3.15 3.440 17.02  0  0    3    2
+## Valiant           18.1   6  225 105 2.76 3.460 20.22  1  0    3    1</code></pre>
+<p><img src="rules_files/figure-html/data_mtcars_plot-1.png" title="" alt="" width="768" /></p>
+<p><code>iris</code>: Gives the measurements in centimeters of the variables sepal length and width and petal length and width, respectively, for 50 flowers from each of 3 species of iris. A data frame with 150 cases (rows) and 5 variables (columns) named:</p>
+<ul>
+<li><em>Sepal.Length</em></li>
+<li><em>Sepal.Width</em></li>
+<li><em>Petal.Length</em></li>
+<li><em>Petal.Width</em></li>
+<li><em>Species</em></li>
+</ul>
+<pre class="r"><code>head(iris)</code></pre>
+<pre><code>##   Sepal.Length Sepal.Width Petal.Length Petal.Width Species
+## 1          5.1         3.5          1.4         0.2  setosa
+## 2          4.9         3.0          1.4         0.2  setosa
+## 3          4.7         3.2          1.3         0.2  setosa
+## 4          4.6         3.1          1.5         0.2  setosa
+## 5          5.0         3.6          1.4         0.2  setosa
+## 6          5.4         3.9          1.7         0.4  setosa</code></pre>
+<p><img src="rules_files/figure-html/data_iris_plot-1.png" title="" alt="" width="768" /></p>
+</div>
+<div id="oner" class="section level2">
+<h2>OneR</h2>
+<p>Generates a one-level decision tree expressed in the form of a set of rules that all test one particular attribute. 1R chooses the attribute that produces rules with the smallest error rate.</p>
+<pre class="r"><code>mod.oner &lt;- OneR(Species ~ ., data = iris)
+print(mod.oner)</code></pre>
+<pre><code>## Petal.Width:
+##  &lt; 0.8   -&gt; setosa
+##  &lt; 1.75  -&gt; versicolor
+##  &gt;= 1.75 -&gt; virginica
+## (144/150 instances correct)</code></pre>
+</div>
+<div id="m5" class="section level2">
+<h2>M5</h2>
+<p>Constructed by first using a decision tree induction algorithm minimizing intrasubset variation in the class values down each branch.</p>
+<p>Splitting criterion: Maximize <em>standard deviation reduction</em>, <span class="math display">\[
+SDR = sd(T) − \sum_i{\frac{|T_i|}{|T|} * sd(T_i)},
+\]</span> where <span class="math inline">\(T_1, T_2, ...\)</span> are the sets that result from splitting the node according to the chosen attribute, and <span class="math inline">\(sd(T)\)</span> is the standard deviation of the class values.</p>
+<p>A linear model is built for each interior node of the tree and using a greedy search removes variables that contribute little. M5 then applies pruning by subtree replacement. And finally the prediction accuracy is improved by a smoothing process, <span class="math display">\[
+PV(S) = \frac{n_i \times PV(S_i) + k \times M(S)}{n_i + k},
+\]</span> where <span class="math inline">\(PV(S_i)\)</span> is the predicted value at branch <span class="math inline">\(S_i\)</span> of subtree S,<br />
+<span class="math inline">\(M(S)\)</span> is the value given by the model at <span class="math inline">\(S\)</span>,<br />
+<span class="math inline">\(n_i\)</span> is the number of training cases at <span class="math inline">\(S_i\)</span>, and<br />
+<span class="math inline">\(k\)</span> is a smoothing constant.</p>
+<pre class="r"><code>mod.m5 &lt;- M5Rules(mpg ~ ., data = mtcars)
+print(mod.m5)</code></pre>
+<pre><code>## M5 pruned model rules 
+## (using smoothed linear models) :
+## Number of Rules : 2
+## 
+## Rule: 1
+## IF
+##  cyl &gt; 5
+## THEN
+## 
+## mpg = 
+##  -0.5389 * cyl 
+##  + 0.0048 * disp 
+##  - 0.0206 * hp 
+##  - 3.0997 * wt 
+##  + 34.4212 [21/26.733%]
+## 
+## Rule: 2
+## 
+## mpg = 
+##  -0.1351 * disp 
+##  + 40.872 [11/59.295%]</code></pre>
+</div>
+<div id="ripper" class="section level2">
+<h2>RIPPER</h2>
+<p>RIPPER is a variant of the original <strong>IREP</strong> (incremental reduced error pruning, integration of reduced error pruning with a separate-and-conquer rule learning) algorithm with three modifications:</p>
+<ul>
+<li><p>Alternative metric for guiding its pruning phase: Deletes of <em>any final sequence of conditions</em> from the rule to maximize the function <span class="math display">\[
+v^*(Rule, PrunePos, PruneNeg) \equiv \frac{p - n}{p + n},
+\]</span> where <span class="math inline">\(P\)</span> (respectively <span class="math inline">\(N\)</span>) is the total number of examples in <span class="math inline">\(PrunePos\)</span> (<span class="math inline">\(PruneNeg\)</span>) and <span class="math inline">\(p\)</span> (<span class="math inline">\(n\)</span>) is the number of examples in <span class="math inline">\(PrunePos\)</span> (<span class="math inline">\(PruneNeg\)</span>) covered by <span class="math inline">\(Rule\)</span>.</p></li>
+<li><p>A new Stopping condition: After each rule is added, the total <em>description length</em> of the ruleset and the examples is computed, and stops adding rules when this description is more than <em>d</em> bits larger than the smallest description length obtained so far.</p></li>
+<li><p>Optimization of initial rules learned by IREP: Considered in the order they were constructed, for each rule <span class="math inline">\(R_i\)</span> two alternatives are constructed: a <em>replacement</em> <span class="math inline">\(R_i&#39;\)</span> (exclude <span class="math inline">\(R_i\)</span> and minimize error of ruleset), and a <em>revised</em> <span class="math inline">\(R_i\)</span> (greedily adding conditions to <span class="math inline">\(R_i\)</span>). A MDL heuristic is used to decide whether the final theory should include the replacement, revised, or original rule.</p></li>
+</ul>
+<pre class="r"><code>mod.rip &lt;- JRip(Species ~ ., data = iris)
+print(mod.rip)</code></pre>
+<pre><code>## JRIP rules:
+## ===========
+## 
+## (Petal.Length &lt;= 1.9) =&gt; Species=setosa (50.0/0.0)
+## (Petal.Width &lt;= 1.7) and (Petal.Length &lt;= 4.9) =&gt; Species=versicolor (48.0/1.0)
+##  =&gt; Species=virginica (52.0/3.0)
+## 
+## Number of Rules : 3</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

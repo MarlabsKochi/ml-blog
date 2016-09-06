@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Regularization</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="site_libs/highlight/default.css"
+      type="text/css" />
+<script src="site_libs/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="../css/custom.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Machine Learning</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Algorithm
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Regression.html">Regression</a>
+    </li>
+    <li>
+      <a href="Regularization.html">Regularization</a>
+    </li>
+    <li>
+      <a href="clustering.html">Clustering</a>
+    </li>
+    <li>
+      <a href="DecisionTrees.html">Decision Trees</a>
+    </li>
+    <li>
+      <a href="nnet.html">Neural Networks</a>
+    </li>
+    <li>
+      <a href="Ensemble.html">Ensemble Learning</a>
+    </li>
+    <li>
+      <a href="nbayes.html">Naive Bayes</a>
+    </li>
+    <li>
+      <a href="rules.html">Rule based Learning</a>
+    </li>
+    <li>
+      <a href="DimReduction.html">Dimensionality Reduction</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Regularization</h1>
+
+</div>
+
+
+<hr />
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>Demonstrate various regularization techniques used in regression analysis.</p>
+<div id="ordinary-least-squares" class="section level5">
+<h5>Ordinary Least Squares</h5>
+<p>OLS regression fits a linear model with coefficients <span class="math inline">\(w = (w_1, ..., w_p)\)</span> to minimize the RSS between the observed and the predicted responses.</p>
+<p>Mathematically, it tries to minimize the objective function:<br />
+<span class="math display">\[
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\underset{w}{min\,} \norm {X w - y}_2^2
+\]</span></p>
+</div>
+<div id="ridge-regression" class="section level5">
+<h5>Ridge Regression</h5>
+<p>Ridge regression imposes a penalty on the size of coefficients. Here, <span class="math inline">\(\alpha \geq 0\)</span> is a complexity parameter that controls the amount of shrinkage of coefficients.</p>
+<p>Objective to minimize:<br />
+<span class="math display">\[
+\underset{w}{min\,} {\norm {X w - y}_2^2 + \alpha\, \norm w_2^2}
+\]</span></p>
+</div>
+<div id="lasso-regression" class="section level5">
+<h5>Lasso Regression</h5>
+<p>Mathematically, it consists of a linear model trained with <span class="math inline">\(\ell_1\)</span> prior as regularizer. The lasso estimate solves the minimization of the least-squares penalty with <span class="math inline">\(\alpha ||w||_1\)</span> added, where <span class="math inline">\(\alpha\)</span> is a constant and <span class="math inline">\(||w||_1\)</span> is the <span class="math inline">\(\ell_1\)</span>-norm of the parameter vector.</p>
+<p>Objective to minimize: <span class="math display">\[
+\underset{w}{min\,} { \frac{1}{2n_{samples}} \norm {X w - y}_2 ^ 2 + \alpha\, \norm w_1}
+\]</span></p>
+</div>
+<div id="elastic-net-regression" class="section level5">
+<h5>Elastic Net Regression</h5>
+<p>ElasticNet is a linear regression model trained with <span class="math inline">\(\ell_1\)</span> and <span class="math inline">\(\ell_2\)</span> prior as regularizer. We control the convex combination of <span class="math inline">\(\ell_1\)</span> and <span class="math inline">\(\ell_2\)</span> using the <span class="math inline">\(\ell_1\)</span>-ratio (<span class="math inline">\(\rho\)</span>) parameter.</p>
+<p>Objective to minimize:<br />
+<span class="math display">\[
+\underset{w}{min\,} { \frac{1}{2n_{samples}} \norm {X w - y}_2^2 + \alpha \rho \norm w_1 +\frac{\alpha(1-\rho)}{2} \norm w_2^2}
+\]</span></p>
+</div>
+</div>
+<div id="dataset" class="section level2">
+<h2>Dataset</h2>
+<p>Major League Baseball Data from the 1986 and 1987 seasons.</p>
+<pre class="r"><code>model.data &lt;- Hitters[complete.cases(Hitters),]
+str(model.data)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    263 obs. of  20 variables:
+##  $ AtBat    : int  315 479 496 321 594 185 298 323 401 574 ...
+##  $ Hits     : int  81 130 141 87 169 37 73 81 92 159 ...
+##  $ HmRun    : int  7 18 20 10 4 1 0 6 17 21 ...
+##  $ Runs     : int  24 66 65 39 74 23 24 26 49 107 ...
+##  $ RBI      : int  38 72 78 42 51 8 24 32 66 75 ...
+##  $ Walks    : int  39 76 37 30 35 21 7 8 65 59 ...
+##  $ Years    : int  14 3 11 2 11 2 3 2 13 10 ...
+##  $ CAtBat   : int  3449 1624 5628 396 4408 214 509 341 5206 4631 ...
+##  $ CHits    : int  835 457 1575 101 1133 42 108 86 1332 1300 ...
+##  $ CHmRun   : int  69 63 225 12 19 1 0 6 253 90 ...
+##  $ CRuns    : int  321 224 828 48 501 30 41 32 784 702 ...
+##  $ CRBI     : int  414 266 838 46 336 9 37 34 890 504 ...
+##  $ CWalks   : int  375 263 354 33 194 24 12 8 866 488 ...
+##  $ League   : Factor w/ 2 levels &quot;A&quot;,&quot;N&quot;: 2 1 2 2 1 2 1 2 1 1 ...
+##  $ Division : Factor w/ 2 levels &quot;E&quot;,&quot;W&quot;: 2 2 1 1 2 1 2 2 1 1 ...
+##  $ PutOuts  : int  632 880 200 805 282 76 121 143 0 238 ...
+##  $ Assists  : int  43 82 11 40 421 127 283 290 0 445 ...
+##  $ Errors   : int  10 14 3 4 25 7 9 19 0 22 ...
+##  $ Salary   : num  475 480 500 91.5 750 ...
+##  $ NewLeague: Factor w/ 2 levels &quot;A&quot;,&quot;N&quot;: 2 1 2 2 1 1 1 2 1 1 ...</code></pre>
+</div>
+<div id="fitting-the-models" class="section level2">
+<h2>Fitting the Models</h2>
+<p>We will use the R <code>glmnet</code> package for regressing the <em>Salary</em> of the baseball players. In <code>glmnet</code>, the penalty on the coefficient vector is defined as <span class="math display">\[
+\frac{1-\alpha}{2} \norm {\beta_j}_2^2 + \alpha\, \norm {\beta_j}_1,
+\]</span> where <span class="math inline">\(\alpha=1\)</span> is the lasso penalty, and <span class="math inline">\(\alpha=0\)</span> the ridge penalty. For <span class="math inline">\(0 &lt; \alpha &lt; 1\)</span> you get the elastic net model.</p>
+<pre class="r"><code>x &lt;- model.matrix(Salary ~., model.data)[, -1]
+y &lt;- model.data$Salary
+grid &lt;- 10^seq(0.1, 5.25, length = 100)
+
+ridge.mod &lt;- glmnet(x, y, alpha = 0, lambda = grid)
+cv.ridge &lt;- cv.glmnet(x, y, alpha = 0)
+
+lasso.mod &lt;- glmnet(x, y, alpha = 1, lambda = grid)
+cv.lasso &lt;- cv.glmnet(x, y, alpha = 1)
+
+elastic.mod &lt;- glmnet(x, y, alpha = 0.05, lambda = grid)
+cv.elastic &lt;- cv.glmnet(x, y, alpha = 0.05)</code></pre>
+<pre class="r"><code>ridge.mod$lambda[50]</code></pre>
+<pre><code>## [1] 502.3543</code></pre>
+<p>Here are the coefficients when <span class="math inline">\(\lambda = 502.3542734\)</span> for ridge regression:</p>
+<pre class="r"><code>coef(ridge.mod)[,50]</code></pre>
+<pre><code>##  (Intercept)        AtBat         Hits        HmRun         Runs 
+##  32.28886473   0.10294692   0.73816726   0.97336679   0.99928237 
+##          RBI        Walks        Years       CAtBat        CHits 
+##   0.87005503   1.45357384   2.18451382   0.01118123   0.05121007 
+##       CHmRun        CRuns         CRBI       CWalks      LeagueN 
+##   0.36720312   0.10245821   0.10754182   0.06687056  17.25729011 
+##    DivisionW      PutOuts      Assists       Errors   NewLeagueN 
+## -65.35634421   0.13934708   0.02059125  -0.96259342   9.37464578</code></pre>
+<p>To predict ridge regression coefficients for a new value of <span class="math inline">\(\lambda\)</span>, say 50:</p>
+<pre class="r"><code>coef(ridge.mod, s = 50)[1:20,]</code></pre>
+<pre><code>##   (Intercept)         AtBat          Hits         HmRun          Runs 
+##  4.834785e+01 -3.541365e-01  1.953935e+00 -1.287662e+00  1.155112e+00 
+##           RBI         Walks         Years        CAtBat         CHits 
+##  8.085495e-01  2.710330e+00 -6.215391e+00  5.982191e-03  1.070891e-01 
+##        CHmRun         CRuns          CRBI        CWalks       LeagueN 
+##  6.292899e-01  2.180264e-01  2.156013e-01 -1.491177e-01  4.586129e+01 
+##     DivisionW       PutOuts       Assists        Errors    NewLeagueN 
+## -1.182266e+02  2.501814e-01  1.209485e-01 -3.276847e+00 -9.426409e+00</code></pre>
+<p>Minimum <span class="math inline">\(\lambda\)</span> and mean CV error for ridge regression:</p>
+<pre class="r"><code>c(cv.ridge$lambda.min, min(cv.ridge$cvm))</code></pre>
+<pre><code>## [1]     28.01718 115163.60638</code></pre>
+<p><img src="Regularization_files/figure-html/modelselect-1.png" title="" alt="" width="864" /></p>
+<p><img src="Regularization_files/figure-html/coefestimates-1.png" title="" alt="" width="864" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Regression</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="site_libs/highlight/default.css"
+      type="text/css" />
+<script src="site_libs/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="../css/custom.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Machine Learning</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Algorithm
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Regression.html">Regression</a>
+    </li>
+    <li>
+      <a href="Regularization.html">Regularization</a>
+    </li>
+    <li>
+      <a href="clustering.html">Clustering</a>
+    </li>
+    <li>
+      <a href="DecisionTrees.html">Decision Trees</a>
+    </li>
+    <li>
+      <a href="nnet.html">Neural Networks</a>
+    </li>
+    <li>
+      <a href="Ensemble.html">Ensemble Learning</a>
+    </li>
+    <li>
+      <a href="nbayes.html">Naive Bayes</a>
+    </li>
+    <li>
+      <a href="rules.html">Rule based Learning</a>
+    </li>
+    <li>
+      <a href="DimReduction.html">Dimensionality Reduction</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Regression</h1>
+
+</div>
+
+
+<hr />
+<div id="dataset" class="section level2">
+<h2>Dataset</h2>
+<p>A data frame with 32 observations on 11 variables.</p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">var</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">mpg</td>
+<td align="left">Miles/(US) gallon</td>
+</tr>
+<tr class="even">
+<td align="left">cyl</td>
+<td align="left">Number of cylinders</td>
+</tr>
+<tr class="odd">
+<td align="left">disp</td>
+<td align="left">Displacement (cu.in.)</td>
+</tr>
+<tr class="even">
+<td align="left">hp</td>
+<td align="left">Gross horsepower</td>
+</tr>
+<tr class="odd">
+<td align="left">drat</td>
+<td align="left">Rear axle ratio</td>
+</tr>
+<tr class="even">
+<td align="left">wt</td>
+<td align="left">Weight (1000 lbs)</td>
+</tr>
+<tr class="odd">
+<td align="left">qsec</td>
+<td align="left">1/4 mile time</td>
+</tr>
+<tr class="even">
+<td align="left">vs</td>
+<td align="left">V/S</td>
+</tr>
+<tr class="odd">
+<td align="left">am</td>
+<td align="left">Transmission (0 = automatic, 1 = manual)</td>
+</tr>
+<tr class="even">
+<td align="left">gear</td>
+<td align="left">Number of forward gears</td>
+</tr>
+<tr class="odd">
+<td align="left">carb</td>
+<td align="left">Number of carburetors</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>head(mtcars)</code></pre>
+<pre><code>##                    mpg cyl disp  hp drat    wt  qsec vs am gear carb
+## Mazda RX4         21.0   6  160 110 3.90 2.620 16.46  0  1    4    4
+## Mazda RX4 Wag     21.0   6  160 110 3.90 2.875 17.02  0  1    4    4
+## Datsun 710        22.8   4  108  93 3.85 2.320 18.61  1  1    4    1
+## Hornet 4 Drive    21.4   6  258 110 3.08 3.215 19.44  1  0    3    1
+## Hornet Sportabout 18.7   8  360 175 3.15 3.440 17.02  0  0    3    2
+## Valiant           18.1   6  225 105 2.76 3.460 20.22  1  0    3    1</code></pre>
+<p><img src="Regression_files/figure-html/mtcarsplot-1.png" title="" alt="" width="384" /> <br/></p>
+</div>
+<div id="ols-regression" class="section level2">
+<h2>OLS Regression</h2>
+<p>Given a data set <span class="math inline">\({\{y_{i},\,x_{i1},\ldots ,x_{ip}\}_{i=1}^{n}}\)</span> of n statistical units, the model takes the form: <span class="math display">\[
+y_{i}=\beta _{1}x_{i1}+\cdots +\beta _{p}x_{ip}+\varepsilon _{i}=\mathbf {x} _{i}^{\rm {T}}{\boldsymbol {\beta }}+\varepsilon _{i},\qquad i=1,\ldots ,n,
+\]</span> where,<br />
+<span class="math inline">\(y_{i}\)</span> is the response variable,<br />
+<span class="math inline">\(x_{i1},\,x_{i2},\,\ldots ,\,x_{ip}\)</span> are the regressors,<br />
+<span class="math inline">\(\beta\)</span> is a p-dimensional parameter vector (estimated by least-squares method)<br />
+<span class="math inline">\(\epsilon_{i}\)</span> is the error term.</p>
+<div id="fitting-the-model" class="section level3">
+<h3>Fitting the Model</h3>
+<p>We will regress the <em>mpg</em> variable onto <em>disp, cyl, am</em>. A linear model is fitted by least-squares, which minimizes the sum of squared residuals and leads to a closed-form expression for the estimated value of the unknown parameter <span class="math inline">\(\boldsymbol \beta\)</span>.</p>
+<p>Objective: <span class="math display">\[
+{\hat {\boldsymbol {\beta }}}={\rm {arg}}\min _{\boldsymbol \beta }\,\left\lVert \mathbf {y}-\mathbf {X}{\boldsymbol \beta } \right\rVert ,
+\]</span></p>
+<p>which leads to: <span class="math display">\[
+{\hat {\boldsymbol {\beta }}}=(\mathbf {X} ^{\rm {T}}\mathbf {X} )^{-1}\mathbf {X} ^{\rm {T}}\mathbf {y} ={\big (}\,{\textstyle \sum }\mathbf {x} _{i}\mathbf {x} _{i}^{\rm {T}}\,{\big )}^{-1}{\big (}\,{\textstyle \sum }\mathbf {x} _{i}y_{i}\,{\big )}.
+\]</span></p>
+<pre class="r"><code>model &lt;- lm(mpg ~ cyl + disp + am, data = mtcars)
+model$coefficients</code></pre>
+<pre><code>## (Intercept)         cyl        disp          am 
+## 32.91685995 -1.61821911 -0.01559041  1.92872540</code></pre>
+<p>Adjusted R-squared: 0.7521509<br />
+F-statistic: 32.3586942</p>
+<p><img src="Regression_files/figure-html/residualplot-1.png" title="" alt="" width="480" /></p>
+<pre class="r"><code># sales vs predicted sales
+head(data.frame(mpg = mtcars$mpg, pred = predict(model)), 10)</code></pre>
+<pre><code>##                    mpg     pred
+## Mazda RX4         21.0 22.64180
+## Mazda RX4 Wag     21.0 22.64180
+## Datsun 710        22.8 26.68894
+## Hornet 4 Drive    21.4 19.18522
+## Hornet Sportabout 18.7 14.35856
+## Valiant           18.1 19.69970
+## Duster 360        14.3 14.35856
+## Merc 240D         24.4 24.15687
+## Merc 230          22.8 24.24885
+## Merc 280          19.2 20.59459</code></pre>
+<p><br/></p>
+</div>
+</div>
+<div id="loess" class="section level2">
+<h2>LOESS</h2>
+<p>Suppose a dataset consists of <span class="math inline">\(N\)</span> pairs of observations, <span class="math inline">\(\{(x_i, y_i)\}_{i=1}^N\)</span>. For fitting a point <span class="math inline">\(x\)</span>, define a bandwidth <span class="math inline">\(h(x)\)</span> and a smoothing window <span class="math inline">\((x−h(x),\,x+h(x))\)</span>. The LOWESS algorithm finds the vector <span class="math inline">\(\boldsymbol\beta\)</span> of coefficients which minimizes the locally weighted sum of squares <span class="math display">\[
+\boldsymbol{\hat\beta} = \underset {\boldsymbol\beta \in \mathbb R^{p + 1}}{\arg\min} \sum_{i=1}^N w_i(x)(y_i - \langle{\boldsymbol\beta, \, A(x_i - x)}\rangle)^2
+\]</span> where,<br />
+<span class="math display">\[
+\begin{align}
+A_0(v) = 1, &amp;&amp;
+A_k(v) = \frac {v^k}{k!}, &amp;&amp; 
+w_i(x) = W\left(\frac {x_i - x}{h(x)}\right),
+\end{align}
+\]</span> <span class="math inline">\(W(u)\)</span> is a weight function that assigns largest weight to observations close to <span class="math inline">\(x\)</span>.</p>
+<p>The local regression estimate is <span class="math display">\[
+\hat f(x) = \langle \boldsymbol {\hat\beta}, \, A(0) \rangle = \boldsymbol {\hat\beta}_0.
+\]</span></p>
+<pre class="r"><code>set.seed(19)
+
+period &lt;- 120
+x &lt;- 1:period
+y &lt;- sin(2*pi*x/period) + runif(length(x),-1,1)
+
+spanlist &lt;- c(0.10, 0.25, 0.50, 0.75, 1.00, 2.00)
+loess.lines &lt;- sapply(spanlist, function(s) {
+  y.loess &lt;- loess(y ~ x, span = s, data.frame(x = x, y = y))
+  cat(&quot;span = &quot;, format(s, nsmall = 2), &quot;, rse: &quot;, y.loess$s, &quot;\n&quot;, sep = &quot;&quot;)
+  predict(y.loess)
+})</code></pre>
+<pre><code>## span = 0.10, rse: 0.5825607
+## span = 0.25, rse: 0.5787946
+## span = 0.50, rse: 0.5719129
+## span = 0.75, rse: 0.5816912
+## span = 1.00, rse: 0.6184237
+## span = 2.00, rse: 0.7045324</code></pre>
+<p><br/></p>
+<p><img src="Regression_files/figure-html/loessplot-1.png" title="" alt="" width="672" /> <br/></p>
+</div>
+<div id="logistic-regression" class="section level2">
+<h2>Logistic Regression</h2>
+<p>Formally, the logistic regression model is that <span class="math display">\[
+\log {\frac {p(x)}{1 - p(x)}} = \beta_0 + \beta^T x.
+\]</span> Suppose that we are given a sample <span class="math inline">\((x_i, y_i)\)</span>, <span class="math inline">\(i = 1,\ldots,n\)</span>, where <span class="math inline">\(y_i\)</span> denotes the class <span class="math inline">\(\in \{1, 2\}\)</span> of the <span class="math inline">\(i\)</span>-th observation. Then, assuming that the class labels are conditionally independent, the log-likelihood is given by <span class="math display">\[
+\begin{aligned}
+\ell(\beta_0, \beta) &amp;= \sum_{i=1}^n \log {P(C = y_i \mid X = x_i)} &amp;\\
+                     &amp;= \sum_{i=1}^n \left\{u_i \cdot (\beta_0 + \beta^T x_i) - \log {(1 + \exp (\beta_0 + \beta^T x_i))} \right\}
+\end{aligned}
+\]</span> where, <span class="math display">\[
+\begin{align}
+u_i = \begin{cases} 1 &amp; {\mbox{if }} y_i = 1 \\
+                    0 &amp; {\mbox{if }} y_i = 2 \end{cases} 
+\end{align}
+\]</span></p>
+<p>The coefficients are estimated by maximizing the likelihood, <span class="math display">\[
+\hat\beta_0, \hat\beta = \underset {\beta_0 \in \mathbb R, \beta \in \mathbb R^p}{\arg \max} \ell(\beta_0, \beta)
+\]</span></p>
+<pre class="r"><code>mtcars.glm &lt;- glm(vs ~ mpg, data = mtcars, family = binomial)
+mtcars.glm</code></pre>
+<pre><code>## 
+## Call:  glm(formula = vs ~ mpg, family = binomial, data = mtcars)
+## 
+## Coefficients:
+## (Intercept)          mpg  
+##     -8.8331       0.4304  
+## 
+## Degrees of Freedom: 31 Total (i.e. Null);  30 Residual
+## Null Deviance:       43.86 
+## Residual Deviance: 25.53     AIC: 29.53</code></pre>
+<p><br/></p>
+<p><img src="Regression_files/figure-html/logregplot-1.png" title="" alt="" width="480" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

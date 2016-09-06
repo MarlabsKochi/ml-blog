@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+
+
+
+<title>Dimensionality Reduction</title>
+
+<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<link rel="stylesheet"
+      href="site_libs/highlight/default.css"
+      type="text/css" />
+<script src="site_libs/highlight/highlight.js"></script>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+<style type="text/css">
+h1 {
+  font-size: 34px;
+}
+h1.title {
+  font-size: 38px;
+}
+h2 {
+  font-size: 30px;
+}
+h3 {
+  font-size: 24px;
+}
+h4 {
+  font-size: 18px;
+}
+h5 {
+  font-size: 16px;
+}
+h6 {
+  font-size: 12px;
+}
+.table th:not([align]) {
+  text-align: left;
+}
+</style>
+
+<link rel="stylesheet" href="../css/custom.css" type="text/css" />
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img {
+  max-width:100%;
+  height: auto;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+</style>
+
+<style type="text/css">
+/* padding for bootstrap navbar */
+body {
+  padding-top: 66px;
+  padding-bottom: 40px;
+}
+/* offset scroll position for anchor links (for fixed navbar)  */
+.section h1 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+
+.section h2 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h3 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h4 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h5 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+.section h6 {
+  padding-top: 71px;
+  margin-top: -71px;
+}
+</style>
+
+<script>
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.parent().addClass('active');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+});
+</script>
+
+
+<div class="container-fluid main-container">
+
+<!-- tabsets -->
+<script src="site_libs/navigation-1.0/tabsets.js"></script>
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+</script>
+
+<!-- code folding -->
+
+
+
+
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = false;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.9em;
+  padding-left: 5px;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+.tocify-subheader {
+  display: inline;
+}
+.tocify-subheader .tocify-item {
+  font-size: 0.95em;
+  padding-left: 10px;
+}
+
+</style>
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Machine Learning</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">Home</a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Algorithm
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="Regression.html">Regression</a>
+    </li>
+    <li>
+      <a href="Regularization.html">Regularization</a>
+    </li>
+    <li>
+      <a href="clustering.html">Clustering</a>
+    </li>
+    <li>
+      <a href="DecisionTrees.html">Decision Trees</a>
+    </li>
+    <li>
+      <a href="nnet.html">Neural Networks</a>
+    </li>
+    <li>
+      <a href="Ensemble.html">Ensemble Learning</a>
+    </li>
+    <li>
+      <a href="nbayes.html">Naive Bayes</a>
+    </li>
+    <li>
+      <a href="rules.html">Rule based Learning</a>
+    </li>
+    <li>
+      <a href="DimReduction.html">Dimensionality Reduction</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div class="fluid-row" id="header">
+
+
+
+<h1 class="title toc-ignore">Dimensionality Reduction</h1>
+
+</div>
+
+
+<hr />
+<div id="lda" class="section level2">
+<h2>LDA</h2>
+<p>The LDA method approximates the Bayes classifier assuming that the <span class="math inline">\(p\)</span>-dimensional random variable <span class="math inline">\(X\)</span> is drawn from a multivariate Gaussian distribution <span class="math inline">\({\mathcal N}(\mu_k ,\, \mathbf\Sigma)\)</span>. The classifier assigns an observation <span class="math inline">\(X = x\)</span> to the class for which <span class="math display">\[
+\hat\delta_k(x) = x^T \mathbf\Sigma^{-1} \mu_k - \frac{1}{2} \mu_k^T \mathbf\Sigma^{-1} \mu_k + \log {\pi_k}
+\]</span> is largest. <span class="math inline">\(\hat\delta_k(x)\)</span> is the discriminant function, and <span class="math inline">\(\pi_k\)</span> is the class membership probability.</p>
+<pre class="r"><code>model.lda &lt;- lda(Species ~ ., iris, prior = c(1, 1, 1) / 3)
+model.lda$means</code></pre>
+<pre><code>##            Sepal.Length Sepal.Width Petal.Length Petal.Width
+## setosa            5.006       3.428        1.462       0.246
+## versicolor        5.936       2.770        4.260       1.326
+## virginica         6.588       2.974        5.552       2.026</code></pre>
+<pre class="r"><code>model.lda$scaling</code></pre>
+<pre><code>##                     LD1         LD2
+## Sepal.Length -0.8293776  0.02410215
+## Sepal.Width  -1.5344731  2.16452123
+## Petal.Length  2.2012117 -0.93192121
+## Petal.Width   2.8104603  2.83918785</code></pre>
+<pre class="r"><code>model.lda$svd</code></pre>
+<pre><code>## [1] 48.642644  4.579983</code></pre>
+<pre class="r"><code>confusionMatrix(predict(model.lda)$class, iris$Species)$table</code></pre>
+<pre><code>##             Reference
+## Prediction   setosa versicolor virginica
+##   setosa         50          0         0
+##   versicolor      0         48         1
+##   virginica       0          2        49</code></pre>
+<p><img src="DimReduction_files/figure-html/ldaplot-1.png" title="" alt="" width="672" /> <br/></p>
+</div>
+<div id="qda" class="section level2">
+<h2>QDA</h2>
+<p>Unlike LDA, QDA assumes that each class has its own covariance matrix. That is, it assumes that an observation from the <span class="math inline">\(k\)</span>th class is of the form <span class="math inline">\(X \sim {\mathcal N} (\mu_k ,\, \mathbf\Sigma_k)\)</span>. <span class="math display">\[
+\hat\delta_k(x) = -\frac{1}{2} {(x - \mu_k)}^T \Sigma_k^{-1} (x - \mu_k) -\frac{1}{2} \log {|\mathbf\Sigma_k|} + \log {\pi_k}
+\]</span></p>
+<pre class="r"><code>model.qda &lt;- qda(Species ~ ., iris, prior = c(1, 1, 1) / 3)
+model.qda$means</code></pre>
+<pre><code>##            Sepal.Length Sepal.Width Petal.Length Petal.Width
+## setosa            5.006       3.428        1.462       0.246
+## versicolor        5.936       2.770        4.260       1.326
+## virginica         6.588       2.974        5.552       2.026</code></pre>
+<pre class="r"><code>ftable(model.qda$scaling, row.vars = c(1, 3))</code></pre>
+<pre><code>##                                   1          2          3          4
+##                                                                     
+## Sepal.Length setosa      -2.8369624 -3.1451104 -0.8878372 -0.4637981
+##              versicolor  -1.9373419  1.1979086  1.9588188 -0.6910239
+##              virginica    1.5726248 -0.8085097  2.6909994  0.4068814
+## Sepal.Width  setosa       0.0000000  3.9386336  0.1263223 -0.2043238
+##              versicolor   0.0000000 -3.7467503  1.1503013  2.0855780
+##              virginica    0.0000000  3.4866013  0.0459556 -1.9279371
+## Petal.Length setosa       0.0000000  0.0000000  5.9785398 -1.7416275
+##              versicolor   0.0000000  0.0000000 -3.3892132  2.8839194
+##              virginica    0.0000000  0.0000000 -3.6018203 -0.6578080
+## Petal.Width  setosa       0.0000000  0.0000000  0.0000000 10.2978593
+##              versicolor   0.0000000  0.0000000  0.0000000 -9.3404922
+##              virginica    0.0000000  0.0000000  0.0000000  4.3947753</code></pre>
+<pre class="r"><code>confusionMatrix(predict(model.qda)$class, iris$Species)$table</code></pre>
+<pre><code>##             Reference
+## Prediction   setosa versicolor virginica
+##   setosa         50          0         0
+##   versicolor      0         48         1
+##   virginica       0          2        49</code></pre>
+<p><img src="DimReduction_files/figure-html/qdaplt-1.png" title="" alt="" width="672" /> <br/></p>
+</div>
+<div id="pca" class="section level2">
+<h2>PCA</h2>
+<p>Rotates the axes of original variable coordinate system to new orthogonal axes, called principal components, such that the new axes coincide with the directions of maximum variation of the original observations. The first principal component of a set of features <span class="math inline">\(X_1, X_2,\ldots, X_p\)</span> is the normalized linear combination of the features <span class="math display">\[
+Z_1 = \phi_{11} X_1 + \phi_{21} X_2 + \ldots + \phi_{p1} X_p
+\]</span> that has the largest variance. Assuming that the features in <span class="math inline">\(\mathbf X\)</span> has been centered, <span class="math inline">\(Z_1\)</span> solves the optimization problem <span class="math display">\[
+\underset {\phi_{11}, \ldots, \phi_{p1}}{\arg \max} \left\{ \frac{1}{n} \sum_{i=1}^n {\left( \sum_{j=1}^p \phi_{j1} x_{ij}\right)}^2 \right\} \text {  subject to } \sum_{j=1}^p \phi_{j1}^2 = 1.
+\]</span> At the <span class="math inline">\(k\)</span>-th stage a linear function <span class="math inline">\(\boldsymbol\phi_k^T \mathbf x\)</span> is found that has maximum variance subject to being uncorrelated with <span class="math inline">\(Z_1, Z_2, \ldots, Z_{k-1}\)</span>.</p>
+<pre class="r"><code># Generates sample matrix of five discrete clusters that have very different 
+# mean and standard deviation values.
+pca.data &lt;- matrix(c(rnorm(10000, mean = 1, sd = 1), 
+                     rnorm(10000, mean = 3, sd = 3),
+                     rnorm(10000, mean = 5, sd = 5),
+                     rnorm(10000, mean = 7, sd = 7),
+                     rnorm(10000, mean = 9, sd = 9)), 
+                   nrow = 2500, ncol = 20, byrow = T, 
+                   dimnames = list(paste0(&quot;R&quot;, 1:2500), 
+                                   paste0(&quot;C&quot;, 1:20)))</code></pre>
+<pre class="r"><code>pca &lt;- prcomp(pca.data, scale = T)
+summary(pca)$importance[, 1:5]</code></pre>
+<pre><code>##                             PC1       PC2       PC3       PC4       PC5
+## Standard deviation     2.187569 0.9836436 0.9737847 0.9560479 0.9457342
+## Proportion of Variance 0.239270 0.0483800 0.0474100 0.0457000 0.0447200
+## Cumulative Proportion  0.239270 0.2876500 0.3350600 0.3807600 0.4254900</code></pre>
+<p><img src="DimReduction_files/figure-html/pcaplot-1.png" title="" alt="" width="1440" /> <br/></p>
+</div>
+<div id="classical-mds" class="section level2">
+<h2>Classical MDS</h2>
+<p>Classical MDS rests on the following equation: Let <span class="math inline">\(\mathbf X\)</span> be the <span class="math inline">\(n \times p\)</span> matrix of point coordinates (assumed here to be column-centered for simplicity); then, the matrix of squared Euclidean distances with elements <span class="math inline">\(d_{ij}(\mathbf X) = \sum_{s=1}^p (x_{is} - x_{js})^2\)</span> is <span class="math display">\[
+\mathbf D^{(2)} = \mathbf {1 \boldsymbol\alpha&#39;} + \mathbf {\boldsymbol\alpha 1&#39;} - 2 \mathbf {X X&#39;}
+\]</span> where <span class="math inline">\(\mathbf 1\)</span> is a vector of ones of appropriate length and <span class="math inline">\(\boldsymbol\alpha\)</span> the vector with diagonal elements of <span class="math inline">\(\mathbf {XX&#39;}\)</span>. Given <span class="math inline">\(\mathbf D\)</span>, <span class="math inline">\(\mathbf X\)</span> is found as follows. Let <span class="math inline">\(\mathbf J = \mathbf I - \mathbf {11&#39;} / \mathbf {1&#39;1}\)</span> be the centering matrix, <span class="math inline">\(-1/2 \, \mathbf J \mathbf D^{(2)} \mathbf J = \mathbf {XX&#39;}\)</span>. Then the eigendecomposition of <span class="math inline">\(-1/2 \, \mathbf J \mathbf D^{(2)} \mathbf J\)</span> is <span class="math inline">\(\mathbf {Q \Lambda Q&#39;}\)</span>, and so <span class="math inline">\(\mathbf X = \mathbf Q \mathbf\Lambda^{1/2}\)</span>. If the matrix of dissimilarities <span class="math inline">\(\mathbf\Delta\)</span> is not euclidean it can be approximated by <span class="math inline">\(\mathbf\Delta^{(2)}\)</span> for <span class="math inline">\(\mathbf D^{(2)}\)</span>.</p>
+<p>Classical MDS minimizes the <em>Strain loss</em> function <span class="math display">\[
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+Strain(\mathbf X) = \norm {(-1 / 2 \, \mathbf J \mathbf\Delta^{(2)} \mathbf J) - \mathbf {XX&#39;}} ^2
+\]</span></p>
+<p>We will use the <code>UScitiesD</code> dataset that gives the straight line distances between 10 cities in the US.</p>
+<pre class="r"><code># inspect first five elements
+as.matrix(UScitiesD)[1:5, 1:5]</code></pre>
+<pre><code>##            Atlanta Chicago Denver Houston LosAngeles
+## Atlanta          0     587   1212     701       1936
+## Chicago        587       0    920     940       1745
+## Denver        1212     920      0     879        831
+## Houston        701     940    879       0       1374
+## LosAngeles    1936    1745    831    1374          0</code></pre>
+<pre class="r"><code>model.mds &lt;- cmdscale(UScitiesD)
+model.mds</code></pre>
+<pre><code>##                     [,1]       [,2]
+## Atlanta        -718.7594  142.99427
+## Chicago        -382.0558 -340.83962
+## Denver          481.6023  -25.28504
+## Houston        -161.4663  572.76991
+## LosAngeles     1203.7380  390.10029
+## Miami         -1133.5271  581.90731
+## NewYork       -1072.2357 -519.02423
+## SanFrancisco   1420.6033  112.58920
+## Seattle        1341.7225 -579.73928
+## Washington.DC  -979.6220 -335.47281</code></pre>
+<p><img src="DimReduction_files/figure-html/mdsplot-1.png" title="" alt="" width="672" /></p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
