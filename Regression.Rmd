@@ -190,4 +190,12 @@ ggplot(mtcars, aes(x = mpg, y = vs)) +
 ```
 
 
+---
+
+In linear regression, the intercept coefficient is the expected value of the response when the predictor variables is zero, and the slopes represent the expected change in response for a unit change in the corresponding predictor. In the linear regression example, the average value of value of *mpg* is `r model$coef[1]` and for every 1 unit increase in *`r names(model$coef)[2]`*, *mpg* changes by `r model$coef[2]` units. Similarly, for every 1 unit increase in *`r names(model$coef)[3]`*, *mpg* changes by `r model$coef[3]` units.  
+
+LOESS assumes no functional form and doesn't produce a regression function or slope parameters that is easily represented by a mathematical formula.  
+
+
+The logistic slope can be interpreted as the effect of a unit change in predictor variable on the log odds ratio when the other variables in the model is held constant. The logistic intercept is the log odds estimate for the whole population. In the example for logistic regression, we can infer that the odds of having a V-engine, gets scaled by $\mathrm{e}^{`r mtcars.glm$coef[2]`} = `r exp(mtcars.glm$coef[2])`$ when *mpg* increases by one unit.
 

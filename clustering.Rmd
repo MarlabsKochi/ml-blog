@@ -140,4 +140,7 @@ plotCluster(noisy.circles.hc.clus - 1, noisy.moons.hc.clus - 1,
 ```
 
 
+---
+
+Each point within a cluster gets assigned to one and only one cluster. In k-means, cluster points assigned to the same centroid belong to the same cluster. The centroid can be considered as a prototypical point inside the cluster. Similarly, k-medoids chooses medoids as cluster centers instead of the centroid. Usually a dendrogram is used to visualize the grouping produced by a hierarchical clustering algorithm. In a dendrogram, the dissimilarity between two child nodes is proportional to the height of their least common ancestor.
 
