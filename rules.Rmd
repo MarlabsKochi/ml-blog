@@ -140,3 +140,7 @@ print(mod.rip)
 ```
 
 
+---
+
+Once the rules are created a domain expert can review and filter these rules to create a feasible subset. When working with large datasets, rules can be visualized for convenience of interpreting the model.
+

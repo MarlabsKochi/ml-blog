@@ -155,3 +155,10 @@ plot(model.ctree)
 ```
 
 
+---
+
+The primary advantage of Decision Trees is that they are visually interpretable and also provide statistical rigor. Each node splits data into different groups. A rule can be extracted by starting from the topmost node of the tree and following down the branches until a leaf is reached. The rules extracted from the CART example, looks as follows: 
+- “IF Petal.Length < 2.5 THEN Species = setosa”
+- “IF Petal.Length > 2.5 and Petal.Width < 1.8 THEN Species = versicolor”
+- “IF Petal.Length > 2.5 and Petal.Width > 1.8 THEN Species = virginica”
+
