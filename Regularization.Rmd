@@ -122,7 +122,7 @@ mtext("Coefficient Shrinkage", outer = T)
 ```
 
 
----
+## Remarks
 
 Lasso imposes sparsity among the coefficients and is great for recovering sparse signals or, when there are large number of variables. Ridge limits the size of the coefficient vector, and hence can reduce overfitting through a better compromise between bias-variance. Elastic Net is a mix of the former two regularization techniques, and hence achieves both shrinkage and automatic feature selection.
 
