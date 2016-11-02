@@ -444,6 +444,8 @@ cv.elastic &lt;- cv.glmnet(x, y, alpha = 0.05)</code></pre>
 <pre><code>## [1]     28.01718 115163.60638</code></pre>
 <p><img src="Regularization_files/figure-html/modelselect-1.png" title="" alt="" width="864" /></p>
 <p><img src="Regularization_files/figure-html/coefestimates-1.png" title="" alt="" width="864" /></p>
+<hr />
+<p>Lasso imposes sparsity among the coefficients and is great for recovering sparse signals or, when there are large number of variables. Ridge limits the size of the coefficient vector, and hence can reduce overfitting through a better compromise between bias-variance. Elastic Net is a mix of the former two regularization techniques, and hence achieves both shrinkage and automatic feature selection.</p>
 </div>
 
 
