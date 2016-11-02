@@ -513,6 +513,10 @@ mtcars.glm</code></pre>
 ## Residual Deviance: 25.53     AIC: 29.53</code></pre>
 <p><br/></p>
 <p><img src="Regression_files/figure-html/logregplot-1.png" title="" alt="" width="480" /></p>
+<hr />
+<p>In linear regression, the intercept coefficient is the expected value of the response when the predictor variables is zero, and the slopes represent the expected change in response for a unit change in the corresponding predictor. In the linear regression example, the average value of value of <em>mpg</em> is 32.9168599 and for every 1 unit increase in <em>cyl</em>, <em>mpg</em> changes by -1.6182191 units. Similarly, for every 1 unit increase in <em>disp</em>, <em>mpg</em> changes by -0.0155904 units.</p>
+<p>LOESS assumes no functional form and doesn’t produce a regression function or slope parameters that is easily represented by a mathematical formula.</p>
+<p>The logistic slope can be interpreted as the effect of a unit change in predictor variable on the log odds ratio when the other variables in the model is held constant. The logistic intercept is the log odds estimate for the whole population. In the example for logistic regression, we can infer that the odds of having a V-engine, gets scaled by <span class="math inline">\(\mathrm{e}^{0.4304135} = 1.5378933\)</span> when <em>mpg</em> increases by one unit.</p>
 </div>
 
 
