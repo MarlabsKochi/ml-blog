@@ -320,9 +320,7 @@ div.tocify {
   </ul>
 </li>
       </ul>
-      <ul class="nav navbar-nav navbar-right">
-        
-      </ul>
+    <ul class="nav navbar-right"><li><a href="http://www.marlabs.com"><img src="http://www.marlabs.com/sites/default/files/logo_0.png" style="width: 80%;"></a></li></ul>
     </div><!--/.nav-collapse -->
   </div><!--/.container -->
 </div><!--/.navbar -->
@@ -518,7 +516,7 @@ mtcars.glm</code></pre>
 <h2>Remarks</h2>
 <p>In linear regression, the intercept coefficient is the expected value of the response when the predictor variables is zero, and the slopes represent the expected change in response for a unit change in the corresponding predictor. In the linear regression example, the average value of value of <em>mpg</em> is 32.9168599 and for every 1 unit increase in <em>cyl</em>, <em>mpg</em> changes by -1.6182191 units. Similarly, for every 1 unit increase in <em>disp</em>, <em>mpg</em> changes by -0.0155904 units. Regression is an enormously important tool for business and financial analysis. As another example, we may choose the <em>rate of inflation</em> as the target variable, and create a regression model to estimate it with the following variables: <em>GDP</em>, <em>import-to-export ratio</em>, <em>number of unemployed</em> as the predictors. A crude NASDAQ stock trading could be modeled as: <span class="math display">\[(\% {Number \, of \, Trades}_t^{\lambda} - 1) \, / \, \lambda = \beta_0 + \beta_1 {Firm Size}_t + \beta_2 {Volatility}_t + \beta_3 {TradeSize}_t + \beta_4 {Price}_t + \epsilon_t \]</span>.</p>
 <p>LOESS assumes no functional form and doesn’t produce a regression function or slope parameters that is easily represented by a mathematical formula.</p>
-<p>The logistic slope can be interpreted as the effect of a unit change in predictor variable on the log odds ratio when the other variables in the model is held constant. The logistic intercept is the log odds estimate for the whole population. In the example for logistic regression, we can infer that the odds of having a V-engine, gets scaled by <span class="math inline">\(\mathrm{e}^{0.4304135} = 1.5378933\)</span> when <em>mpg</em> increases by one unit. Let us consider another example of Logistic Regression applied to medical domain. Lactate and Urea levels as metabolic markers can be used to investigate the survivability of a patient in accident and emergency unit. Suppose a logistic regression model could be constructed as follows to predict a patient’s death: <span class="math display">\[\log {\frac {p}{1 - p}} = -5.716 + (0.270 \times lactate) + (0.053 \times urea) + (1.425 \times age\_group)\]</span>. We can see that odds of death gets multiplied by <span class="math inline">\(\mathrm{e}^{0.270} = 1.31\)</span> for ever one unit increase in lactate levels in serum.</p>
+<p>The logistic slope can be interpreted as the effect of a unit change in predictor variable on the log odds ratio when the other variables in the model is held constant. The logistic intercept is the log odds estimate for the whole population. In the example for logistic regression, we can infer that the odds of having a V-engine, gets scaled by <span class="math inline">\(\mathrm{e}^{0.4304135} = 1.5378933\)</span> when <em>mpg</em> increases by one unit. Let us consider another example of Logistic Regression applied to medical domain. Lactate and Urea levels as metabolic markers can be used to investigate the survivability of a patient in accident and emergency unit. Suppose a logistic regression model could be constructed as follows to predict a patient’s death: <span class="math display">\[\log {\frac {p}{1 - p}} = -5.716 + (0.270 \times lactate) + (0.053 \times urea) + (1.425 \times age\_group)\]</span>. We can see that odds of death gets multiplied by <span class="math inline">\(\mathrm{e}^{0.270} = 1.31\)</span> for every one unit increase in lactate levels in serum.</p>
 </div>
 
 
